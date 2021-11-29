@@ -10,6 +10,9 @@
 /**
  * @enum Types of tokens
  */
+
+
+
 typedef enum {
     TT_EOF,                 // End of file
     TT_EOL,                 //  \n        // idk ci to potrebujeme
@@ -38,13 +41,27 @@ typedef enum {
     TT_NUMBER,   // uvidime ci to je potrebne zadanie 8 strana        
     TT_INTEGER,
     TT_STRING,
-    TT_NIL,
 
     TT_COMMENT,             //  comment
     TT_MULT_COMMENT,        //  multiline comment 
-    TT_IDENTIFIER
+    TT_IDENTIFIER,
+    TT_KW_DO,
+    TT_KW_ELSE,
+    TT_KW_END,
+    TT_KW_FUNCTION,
+    TT_KW_GLOBAL,
+    TT_KW_IF,
+    TT_KW_INTEGER,
+    TT_KW_LOCAL,
+    TT_KW_NIL,
+    TT_KW_NUMBER,
+    TT_KW_REQUIRE,
+    TT_KW_RETURN,
+    TT_KW_STRING,
+    TT_KW_THEN,
+    TT_KW_WHILE
 
-} TypeToken;
+} TokenType;
 
 /**
  * @enum Enumerate for states 
@@ -105,34 +122,47 @@ typedef enum {
 
     S_IDENTIFIER
 
-} State;
+} StateType;
 
 
 typedef enum {
-    KW_END,
+    KW_DO,
     KW_ELSE,
     KW_END,
-    KW_FUNCTION
-
-} KeyWords;
+    KW_FUNCTION,
+    KW_GLOBAL,
+    KW_IF,
+    KW_INTEGER,
+    KW_LOCAL,
+    KW_NIL,
+    KW_NUMBER,
+    KW_REQUIRE,
+    KW_RETURN,
+    KW_STRING,
+    KW_THEN,
+    KW_WHILE
+    
+} KeyWord;
 
 
 /**
  * @struct Structure for Token
  */
 
-typedef union {
+typedef struct {
 
     char *string; // TODO dynamicky string 
     int integer;
-    double number; 
+    double number;
+    KeyWord key_word; 
 
 } TokenAttributes;
 
 typedef struct {
 
-    TypeToken token_type;
-    TokenAttributes token_attrib;
+    TokenType type;
+    TokenAttributes attribs;
 
 } TToken;
 
+TToken *get_token();
