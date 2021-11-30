@@ -11,8 +11,6 @@
  * @enum Types of tokens
  */
 
-
-
 typedef enum {
     TT_EOF,                 // End of file
     TT_EOL,                 //  \n        // idk ci to potrebujeme
@@ -62,6 +60,7 @@ typedef enum {
     TT_KW_WHILE
 
 } TokenType;
+
 
 /**
  * @enum Enumerate for states 
@@ -179,7 +178,7 @@ typedef struct {
 TToken *get_token();
 
 /**
- * @brief appends char to string
+ * @brief Appends char to string
  * 
  * @param string string where the c will be apended
  * @param c char to be appended
@@ -188,4 +187,8 @@ TToken *get_token();
 
 int expand_string(char **string, char c);
 
-
+/**
+ * @brief Token inicialization
+ * 
+ */
+int token_init(TToken *token)

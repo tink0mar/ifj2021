@@ -33,8 +33,19 @@ int expand_string(char **string, char c){
         *string = ptr;
         return 0;
     }
+}
+
+
+TToken *get_token() {
+
+    TToken *token = (TToken *)malloc(sizeof(TToken));
+    
+    token->attribs.string = NULL;
+
+
 
 }
+
 
 
 
