@@ -97,6 +97,7 @@ typedef enum {
     //numbers
     S_INTEGER,
     S_DOT,
+
     S_NUMBER_NO_EX,
     S_EXPONENT,
     S_EX_PLUS_MINUS,
@@ -146,7 +147,7 @@ typedef enum {
 
 
 /**
- * @struct Structure for Token
+ * @struct Structure for Token attributes
  */
 
 typedef struct {
@@ -158,6 +159,10 @@ typedef struct {
 
 } TokenAttributes;
 
+/**
+ * @struct Structure for Token
+ */
+
 typedef struct {
 
     TokenType type;
@@ -165,4 +170,22 @@ typedef struct {
 
 } TToken;
 
+/**
+ * @brief Get the token object
+ * 
+ * @return TToken* 
+ */
+
 TToken *get_token();
+
+/**
+ * @brief appends char to string
+ * 
+ * @param string string where the c will be apended
+ * @param c char to be appended
+ * @return int 
+ */
+
+int expand_string(char **string, char c);
+
+
