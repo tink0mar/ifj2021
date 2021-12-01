@@ -53,7 +53,7 @@ typedef struct {
     /** function extension */
     FunNode *fun_extension;
 
-} TreeNode;
+}TreeNode;
 
 typedef struct {
     /** Pole pro uložení hodnot. */
@@ -62,17 +62,17 @@ typedef struct {
     int topIndex;
 } Stack;
 
-void Stack_Error( int );
 void Stack_Init( Stack *Stack);
 int Stack_IsEmpty( const Stack *Stack );
 int Stack_IsFull( const Stack *Stack );
-TreeNode Stack_Top( const Stack *Stack);
+TreeNode *Stack_Top( const Stack *Stack);
 void Stack_Pop( Stack *Stack );
 void Stack_Push( Stack *Stack, TreeNode *root );
+void Stack_Dispose( Stack *Stack, TreeNode *ptr );
 void bst_init(TreeNode **tree);
-void bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type, Data_type *param_type, int cnt_return_type, Data_type *return_type);
-void bst_insert(TreeNode **tree, char *key, Data_type id);
-bool bst_search(TreeNode  *tree, char *key);
+bool bst_search(TreeNode *tree, char *key);
+int bst_insert(TreeNode **tree, char *key, Data_type id);
+int bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type, Data_type *param_type, int cnt_return_type, Data_type *return_type);
 void bst_dispose(TreeNode  **tree);
 
 #endif //IFJ_SYMTABLE_H
