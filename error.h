@@ -17,6 +17,15 @@ extern int num_error;
  * 
  * @param num_err 
  */
+
 void error_mess(int num_err);
+
+/**
+ * @brief Set global variable num_error to err
+ *  
+ * @param err
+ */
+
+void set_error(int err)
 
 #endif 
