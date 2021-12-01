@@ -15,7 +15,6 @@ int STACK_SIZE = MAX_STACK;
 void Stack_Init( Stack *Stack) {
 
     if (Stack == NULL) {
-//todo
         return;
     } else {
         Stack->topIndex = -1;
@@ -32,17 +31,17 @@ int Stack_IsFull( const Stack *Stack ) {
     return Stack->topIndex == STACK_SIZE-1;
 }
 
-TreeNode Stack_Top( const Stack *Stack) {
+TreeNode *Stack_Top( const Stack *Stack){
     if(Stack_IsEmpty(Stack))
     {
-        return;
+        return NULL;
     }
     return Stack->array[Stack->topIndex];
 }
 void Stack_Pop( Stack *Stack ){
-    if(!Stack_IsEmpty(stack))
+    if(!Stack_IsEmpty(Stack))
     {
-        stack->topIndex -= 1;
+        Stack->topIndex -= 1;
     }
 }
 void Stack_Push( Stack *Stack, TreeNode *root ) {
@@ -51,5 +50,12 @@ void Stack_Push( Stack *Stack, TreeNode *root ) {
     } else {
         Stack->topIndex++;
         Stack->array[Stack->topIndex] = root;
+    }
+}
+void Stack_Dispose( Stack *Stack, TreeNode *ptr ){
+    while (Stack->topIndex != -1){
+        ptr = Stack_Top(Stack);
+        bst_dispose(&ptr);
+        Stack_Pop(Stack);
     }
 }
