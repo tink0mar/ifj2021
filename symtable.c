@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "error.h"
+
 
 void bst_init(TreeNode **tree){
     *tree = NULL;
@@ -37,12 +39,15 @@ bool bst_search(TreeNode  *tree, char *key)
     }
 }
 
-int bst_insert(TreeNode **tree, char *key, Data_type id) {
+void bst_insert(TreeNode **tree, char *key, DataType id) {
     if ((*tree) == NULL) {
 
         (*tree) = malloc(sizeof(TreeNode));
-        if ((*tree) == NULL)
-            return 99;
+        if ((*tree) == NULL){
+            set_error(INTERNAL_ERR);
+            return;
+        }
+
 
         (*tree)->key = key;
         (*tree)->id = id;
@@ -53,7 +58,8 @@ int bst_insert(TreeNode **tree, char *key, Data_type id) {
         fprintf(stderr, "inser %s\n",(*tree)->key);//TODO
 
     } else if (!strcmp((*tree)->key,key)) {
-        return 3;
+        set_error(SEM_UNDEFINED_ERR);
+        return;
 
     } else if (strcmp((*tree)->key,key) < 0) {
         bst_insert((TreeNode **) &((*tree)->left), key, id);
@@ -61,18 +67,21 @@ int bst_insert(TreeNode **tree, char *key, Data_type id) {
     } else {
         bst_insert((TreeNode **) &((*tree)->right), key, id);
     }
-    return 0;
 }
-int bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type, Data_type *param_type, int cnt_return_type, Data_type *return_type) {
+void bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type, DataType *param_type, int cnt_return_type, DataType *return_type) {
     if ((*tree) == NULL) {
 
         (*tree) = malloc(sizeof(TreeNode));
         if ((*tree) == NULL)
-            return 99;
+        {
+            set_error(INTERNAL_ERR);
+            return;
+        }
+
 
         (*tree)->key = key;
         (*tree)->id = id;
-        (*tree)->sym_type = VAR;
+        (*tree)->sym_type = FUN;
         (*tree)->left = NULL;
         (*tree)->right = NULL;
         (*tree)->fun_extension->cnt_param_type = cnt_param_type;
@@ -81,7 +90,8 @@ int bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type
         (*tree)->fun_extension->return_type = return_type;
 
     } else if ((*tree)->key == key) {
-        return 3;
+        set_error(SEM_UNDEFINED_ERR);
+        return;
 
     } else if ((*tree)->key > key) {
         bst_insert((TreeNode **) &((*tree)->left), key, id);
@@ -89,7 +99,6 @@ int bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type
     } else {
         bst_insert((TreeNode **) &((*tree)->right), key, id);
     }
-    return 0;
 }
 
 void bst_dispose(TreeNode  **tree){
