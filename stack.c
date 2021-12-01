@@ -56,7 +56,7 @@ void sym_stack_push( SymStack *stack, TreeNode *root ) {
         stack->array[stack->topIndex] = root;
     }
 }
-void sym_stack_dispose( SymStack *stack, TreeNode *ptr ){
+void sym_stack_dispose( SymStack *stack){
     while (stack->topIndex != -1){
         ptr = sym_stack_top(stack);
         bst_dispose(&ptr);
