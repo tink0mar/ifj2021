@@ -20,32 +20,32 @@ typedef enum
     INT,
     STR,
     NIL
-}Data_type;
+}DataType;
 
 
 typedef enum
 {
     VAR,
     FUN
-}Symbol_Type;
+}SymbolType;
 typedef struct {
     /** counter of input parameters types*/
     int cnt_param_type;
     /** input parameters types*/
-    Data_type *param_type;
+    DataType *param_type;
     /** counter of return parameters types*/
     int cnt_return_type;
     /** Return types*/
-    Data_type *return_type;
+    DataType *return_type;
 }FunNode;
 
 typedef struct {
     /** Token identifier*/
     char *key;
     /**data type*/
-    Data_type id;
+    DataType id;
     /** funkc or variable*/
-    Symbol_Type sym_type;
+    SymbolType sym_type;
     /** Left children*/
     struct TreeNode *left;
     /** Right children*/
@@ -56,23 +56,23 @@ typedef struct {
 }TreeNode;
 
 typedef struct {
-    /** Pole pro uložení hodnot. */
+    /** Array of roots */
     TreeNode *array[MAX_STACK];
-    /** Index prvku na vrcholu zásobníku. */
+    /** Top index */
     int topIndex;
-} Stack;
+} SymStack;
 
-void Stack_Init( Stack *Stack);
-int Stack_IsEmpty( const Stack *Stack );
-int Stack_IsFull( const Stack *Stack );
-TreeNode *Stack_Top( const Stack *Stack);
-void Stack_Pop( Stack *Stack );
-void Stack_Push( Stack *Stack, TreeNode *root );
-void Stack_Dispose( Stack *Stack, TreeNode *ptr );
-void bst_init(TreeNode **tree);
-bool bst_search(TreeNode *tree, char *key);
-int bst_insert(TreeNode **tree, char *key, Data_type id);
-int bst_insert_fun(TreeNode  **tree, char *key, Data_type id, int cnt_param_type, Data_type *param_type, int cnt_return_type, Data_type *return_type);
-void bst_dispose(TreeNode  **tree);
+void sym_stack_init(SymStack *stack);   // topindex = -1
+bool sym_stack_is_empty( const SymStack *stack ); // ak je prazdny vrati true
+bool sym_stack_is_full( const SymStack *stack ); // ak je plny vrati true
+TreeNode *sym_stack_top( const SymStack *stack); // vrati ukazatel na koren
+void sym_stack_pop( SymStack *stack );
+void sym_stack_push( SymStack *stack, TreeNode *root );
+void sym_stack_dispose( SymStack *stack, TreeNode *ptr );
+void bst_init(TreeNode **tree);  // koren = NULL
+bool bst_search(TreeNode *tree, char *key);  //vrati true ked najde
+void bst_insert(TreeNode **tree, char *key, DataType id); //bude insertne alebo vrati chybu
+void bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type, DataType *param_type, int cnt_return_type, DataType *return_type); //bude insertne alebo vrati chybu
+void bst_dispose(TreeNode  **tree); // vymaze strom
 
 #endif //IFJ_SYMTABLE_H
