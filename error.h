@@ -7,5 +7,16 @@
  * Date: 24.11.2021
  */ 
 
+#ifndef ERROR_H_
+#define ERROR_H_
 
-int error_handle(int num_error);
+extern int num_error;
+
+/**
+ * @brief Prints error message
+ * 
+ * @param num_err 
+ */
+void error_mess(int num_err);
+
+#endif 
