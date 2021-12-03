@@ -18,12 +18,6 @@
     if (num_error != 0) { \
     return false;\
     }\
-
-#define CHECK_TOKEN(TOKEN_TYPE, TYPE, ERR) \
-    if (TOKEN_TYPE != TYPE) { \
-        set_error(ERR); \
-        return false; \
-    } \
     
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \
