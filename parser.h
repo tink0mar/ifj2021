@@ -19,7 +19,7 @@
         if (num_error != 0) { \
             return false;\
         } \
-    } \
+    } else {READ = true} \
 
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \
