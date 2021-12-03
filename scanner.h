@@ -68,6 +68,7 @@ typedef enum {
 
 typedef enum {
 
+    S_START,            //co toto to?
     S_EOF,
     
     //operators
@@ -167,18 +168,20 @@ typedef struct {
     TokenType type;
     TokenAttributes attribs;
 
-} TToken;
+} Token;
 
 /**
  * @brief Get the token object
  * 
  * @return TToken* 
  */
-
-TToken *get_token();
+void get_token(Token *token);
 
 /**
  * @brief Appends char to string
+ * 
+ * char *string = NULL;
+ * expand_string(&string,'a');
  * 
  * @param string string where the c will be apended
  * @param c char to be appended
@@ -187,8 +190,4 @@ TToken *get_token();
 
 int expand_string(char **string, char c);
 
-/**
- * @brief Token inicialization
- * 
- */
-int token_init(TToken *token)
+
