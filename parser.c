@@ -151,9 +151,13 @@ bool return_types_list_global(ParserData *p_data, DataType *return_list, int *re
         case TT_KW_FUNCTION:
         case TT_IDENTIFIER:
             p_data->get_token = false;
+            return true;
             break;
 
-        case TT_CO:
+        case TT_COMMA:
+
+            break;
+        
 
     }
 }
@@ -236,11 +240,9 @@ bool global(ParserData *p_data)
         GET_TOKEN(token, p_data->get_token);
         CHECK_VARS(token->type, TT_LEFT_PAR, SYNTACTIC_ERR);
 
-        if ((data_types_list(p_data, &param_list, &param_len)))
-        {
+        if ((data_types_list(p_data, &param_list, &param_len))){
 
-            if (return_types_list_global(p_data, &return_list, &return_len))
-            {
+            if (return_types_list_global(p_data, &return_list, &return_len)) {
                 bool is_defined = false;
 
                 return bst_insert_fun(p_data, fun_id, param_len, param_list, return_len, return_list, false);
@@ -353,35 +355,29 @@ bool body(ParserData *p_data)
     GET_TOKEN(token, p_data->get_token);
 
     // eps
-    if (token->type == TT_EOF)
-    {
-        return true;
-    }
-    else
-    {
-
-        switch (token->type)
-        {
-
+    switch (token->type){   
+        case TT_EOF:
+            return true;
+            break;
         // global
         case TT_KW_GLOBAL:
             return global(p_data) && body(p_data);
             break;
-
         // function
         case TT_KW_FUNCTION:
             return body(p_data);
             break;
-
         // call function
         case TT_IDENTIFIER:
             return function_call(p_data, true) && body(p_data);
             break;
-        }
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;        
     }
-
-    set_error(SYNTACTIC_ERR);
-    return false;
+    
+    
+    
 }
 
 /**
