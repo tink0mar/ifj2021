@@ -182,4 +182,4 @@ bool bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type
  */
 void bst_dispose(TreeNode  **tree); // vymaze strom
 
-#endif //IFJ_SYMTABLE_H
+#endif //IFJ_SYMTABLE
