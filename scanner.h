@@ -167,7 +167,7 @@ typedef struct {
     TokenType type;
     TokenAttributes attribs;
 
-} TToken;
+} Token;
 
 /**
  * @brief Get the token object
@@ -175,7 +175,7 @@ typedef struct {
  * @return TToken* 
  */
 
-TToken *get_token();
+int get_token(Token *token);
 
 /**
  * @brief Appends char to string
@@ -191,4 +191,4 @@ int expand_string(char **string, char c);
  * @brief Token inicialization
  * 
  */
-int token_init(TToken *token)
+int token_init(Token *token)
