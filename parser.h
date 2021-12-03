@@ -13,12 +13,14 @@
 #include "error.h"
 #include "enum_list.h"
 
-#define GET_TOKEN(TOKEN) \
-    get_token(TOKEN); \
-    if (num_error != 0) { \
-    return false;\
-    }\
-    
+#define GET_TOKEN(TOKEN, READ) \
+    if (READ == true) {\
+        get_token(TOKEN); \
+        if (num_error != 0) { \
+            return false;\
+        } \
+    } \
+
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \
         set_error(ERR); \
@@ -29,6 +31,7 @@
 typedef struct {
 
     Token *token;
+    bool get_token;
     SymStack stack;
     TreeNode *global_frame;
 

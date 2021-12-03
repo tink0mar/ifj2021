@@ -116,8 +116,10 @@ bool data_types_list_others(ParserData *p_data, DataType *param_list,int *param_
  * <return_types_list> -> : <data_type> <data_types_list_others>
  */
 
-bool return_types_list(ParserData *p_data, DataType *return_list ) {
+bool return_types_list(ParserData *p_data, DataType *return_list, int *return_len) {
+    Token *token = p_data->token;
 
+    GET_TOKEN(token);
 
 
 }
@@ -126,30 +128,28 @@ bool return_types_list(ParserData *p_data, DataType *return_list ) {
  * <data_types_list> -> eps
  * <data_types_list> -> <data_type> <data_types_list_others>
  */
-bool data_types_list(ParserData *p_data){
+bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len){
 
     Token *token = p_data->token;
 
     GET_TOKEN(token);
-    DataType *param_list = NULL;
-    int param_len = 0;
 
     switch(token->type){
         case TT_RIGHT_PAR:
             // eps
-            return 
+            return true;
             break;
 
         case TT_KW_STRING:
-            enum_append(&param_list, STR, &param_len);
+            enum_append(&param_list, STR, *param_len);
             break;
 
         case TT_KW_NUMBER:
-            enum_append(&param_list, NUM, &param_len);
+            enum_append(&param_list, NUM, *param_len);
             break;
 
         case TT_KW_INTEGER:
-            enum_append(&param_list, INT, &param_len);
+            enum_append(&param_list, INT, *param_len);
             break;
         
         default:
@@ -199,9 +199,16 @@ bool global(ParserData *p_data) {
         GET_TOKEN(token);
         CHECK_VARS(token->type,TT_LEFT_PAR, SYNTACTIC_ERR);
 
-        if ( (data_types_list(p_data, param_list, &param_len)) ) {
+        if ( (data_types_list(p_data, &param_list, &param_len)) ) {
             
-            return return_types_list(p_data, return_list, &return_len);
+            if ( return_types_list(p_data, &return_list, &return_len) ){
+                bool is_defined = false;
+
+                return bst_insert_fun(p_data, fun_id, param_len, param_list, return_len, return_list, false);
+
+            } else {
+                return false
+            }
 
         } else {
             return false;
