@@ -8,9 +8,9 @@
  */
 
 #include "symtable.h"
-#include <stdlib.h>
 #include "error.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 
 int STACK_SIZE = MAX_STACK;
@@ -54,6 +54,8 @@ void sym_stack_push( SymStack *stack, TreeNode *root ) {
     } else {
         stack->topIndex++;
         stack->array[stack->topIndex] = root;
+
+
     }
 }
 void sym_stack_dispose( SymStack *stack){
