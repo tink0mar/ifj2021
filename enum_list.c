@@ -19,7 +19,7 @@ bool enum_append(DataType **list, DataType type, int *len){
         return false;
     } else {
         
-        ptr[0] = type;
+        ptr[*len] = type;
         *list = ptr;
         return true;
     }
