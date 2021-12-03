@@ -60,7 +60,7 @@ void sym_stack_push( SymStack *stack, TreeNode *root ) {
 }
 void sym_stack_dispose( SymStack *stack){
     while (stack->topIndex != -1){
-        ptr = sym_stack_top(stack);
+        TreeNode *ptr = sym_stack_top(stack);
         bst_dispose(&ptr);
         stack_pop(stack);
     }
