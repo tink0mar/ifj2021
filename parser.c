@@ -13,22 +13,10 @@
 #include "parser.h"
 #include "scanner.h"
 #include "symtable.h"
-#include "enum_list.h"
+#include "enum_list.h" 
 
-bool check_tokens(TokenType token_type)
-{
-    TokenType arr[5] = {TT_IDENTIFIER, TT_INTEGER, TT_STRING, TT_NUMBER, TT_KW_NIL};
 
-    for (int i = 0; i < 5; i++)
-    {
-        if (token_type == arr[i])
-            return true;
-    }
-    return false;
-}
-
-void free_resources(ParserData *p_data)
-{
+void free_resources(ParserData *p_data){
 
     // token
     free(p_data->token->attribs.string);
@@ -68,26 +56,14 @@ ParserData *parser_init()
     return p_data;
 }
 
-bool if_clause(ParserData *p_data) {
-    Token *token = p_data->token;
 
-    GET_TOKEN(token, p_data->get_token);
-
-    if (token->type != ) {
-
-        psa(token);
-
-    }
-
-
-}
 
 /**
  * <data_types_list_others> -> eps
  * <data_types_list_others> -> , <data_types> <data_types_list_others>
  */
 
-bool data_types_list_others(ParserData *p_data, DataType *param_list, int *param_len)
+bool data_types_list_others(ParserData *p_data, DataType **param_list, int *param_len)
 {
     Token *token = p_data->token;
 
@@ -117,7 +93,7 @@ bool data_types_list_others(ParserData *p_data, DataType *param_list, int *param
         case TT_KW_INTEGER:
             enum_append(&param_list, INT, param_len);
             break;
-
+        // TODO NIL
         default:
             set_error(SYNTACTIC_ERR);
             return false;
@@ -129,6 +105,58 @@ bool data_types_list_others(ParserData *p_data, DataType *param_list, int *param
     {
         set_error(SYNTACTIC_ERR);
         return false;
+    }
+}
+
+/**
+ *  <return_types_list_others> -> eps
+ *  <return_types_list_others> -> , <data_types> <data_types_list_others>
+ */
+
+bool return_types_list_others_global(ParserData *p_data, DataType **return_list, int *return_len) {
+
+    Token *token = p_data->token;
+
+    GET_TOKEN(token, p_data->get_token);
+
+    if (token->type == TT_COMMA) {
+        
+        GET_TOKEN(token, p_data->get_token);
+
+        switch (token->type){
+
+            case TT_KW_STRING:
+                enum_append(return_list, STR, return_len);
+                break;
+            case TT_KW_NUMBER:
+                enum_append(return_list, NUM, return_len);
+                break;
+            case TT_KW_INTEGER:
+                enum_append(return_list, INT, return_len);
+                break;
+            // TODO NIL
+            default:
+                return false;
+        }
+
+        return_types_list_others_global(p_data, return_list, return_len);
+
+
+    } else {
+        switch(token->type) {
+            
+            //eps
+            case TT_EOF:
+            case TT_KW_GLOBAL:
+            case TT_KW_FUNCTION:
+            case TT_IDENTIFIER:
+                p_data->get_token = false;
+                return true;
+            
+            default:
+                set_error(SYNTACTIC_ERR);
+                return false;
+        }
     }
 }
 
@@ -150,16 +178,40 @@ bool return_types_list_global(ParserData *p_data, DataType *return_list, int *re
         case TT_KW_GLOBAL:
         case TT_KW_FUNCTION:
         case TT_IDENTIFIER:
+            // token was loaded and scanner cant load another
             p_data->get_token = false;
             return true;
-            break;
 
-        case TT_COMMA:
+        case TT_COLON:
 
-            break;
-        
+            GET_TOKEN(token, p_data->get_token);
 
+            switch(token->type) 
+            {
+                case TT_KW_STRING:
+                    enum_append(&return_list, STR, *return_len);
+                    break;
+
+                case TT_KW_NUMBER:
+                    enum_append(&return_list, NUM, *return_len);
+                    break;
+
+                case TT_KW_INTEGER:
+                    enum_append(&return_list, INT, *return_len);
+                    break;
+                // TODO NIL
+                default:
+                    set_error(SYNTACTIC_ERR);
+                    return false;
+            }
+
+            return return_types_list_others_global(p_data,return_list,return_len);
+
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;
     }
+
 }
 
 /**
@@ -191,7 +243,7 @@ bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len)
     case TT_KW_INTEGER:
         enum_append(&param_list, INT, *param_len);
         break;
-
+    // TODO NIL
     default:
         set_error(SYNTACTIC_ERR);
         return false;
@@ -244,16 +296,14 @@ bool global(ParserData *p_data)
 
             if (return_types_list_global(p_data, &return_list, &return_len)) {
                 bool is_defined = false;
-
-                return bst_insert_fun(p_data, fun_id, param_len, param_list, return_len, return_list, false);
+                
+                return bst_insert_fun(p_data, fun_id, FUN , param_len, param_list, return_len, return_list, false);
             }
-            else
-            {
-                return false
+            else {
+                return false;
             }
         }
-        else
-        {
+        else {
             return false;
         }
 
@@ -290,7 +340,7 @@ bool function_param_list(ParserData *p_data, bool is_global_call, TreeNode *func
 /**
  * <function_call> -> ID ( <function_param_list> )
  */
-bool function_call(ParserData *p_data, bool is_global_call)
+bool function_call(ParserData *p_data)
 {
 
     Token *token = p_data->token;
@@ -309,12 +359,6 @@ bool function_call(ParserData *p_data, bool is_global_call)
     // check if function was defined
     CHECK_VARS(func->fun_extension->is_defined, true, SEM_UNDEFINED_ERR);
 
-    // check if function has return types
-    // TODO NEVIEM AKA CHYBA
-    if (is_global_call)
-    {
-        CHECK_VARS(func->fun_extension->cnt_return_type, 0, );
-    }
 
     // check left parenthise
     GET_TOKEN(token, p_data->get_token);
@@ -369,7 +413,7 @@ bool body(ParserData *p_data)
             break;
         // call function
         case TT_IDENTIFIER:
-            return function_call(p_data, true) && body(p_data);
+            return function_call(p_data) && body(p_data);
             break;
         default:
             set_error(SYNTACTIC_ERR);
