@@ -66,6 +66,10 @@ void alphabet(Token *token, char c){
         
         if ( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || ( c >= 'a' && c <= 'z') || c == '_'){
             /**CHECK IT MORE*//*VYPRAZDNIT ATTRIBS OR NOT MORE*/
+            EXPAND_STR;       
+        }
+        else {
+            ungetc(c, stdin);
             if (strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
             if (strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
             if (strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
@@ -81,19 +85,14 @@ void alphabet(Token *token, char c){
             if (strcmp(token->attribs.string, "string")){ token->type = TT_KW_STRING; return; }
             if (strcmp(token->attribs.string, "then")){ token->type = TT_KW_THEN; return; }
             if (strcmp(token->attribs.string, "while")){ token->type = TT_KW_WHILE; return;  }
-            
-            EXPAND_STR;
+            token->type = TT_IDENTIFIER;
             return;
-            }
-        else {
-            ungetc(c, stdin);
-            return; 
         }
     }
 }
 
 // komentare vseobecne
-void dash_minus(Token *token){
+int dash_minus(Token *token){
     char c;
     StateType state = S_MINUS_COMMENT;
 
@@ -108,7 +107,7 @@ void dash_minus(Token *token){
                 } else {
                     token->type = TT_MINUS;
                     ungetc(c, stdin);
-                    return;
+                    return 0;
                 }
                 break;
 
@@ -118,40 +117,59 @@ void dash_minus(Token *token){
                     if (c == '['){
                         state = S_MULT_COMMENT;
                         break;
-                    } else {
-                        set_error(LEXICAL_ERR);
+                    } else if(c == EOL)
                         return;
+                    else if (c == EOF){
+                        ungetc(c, stdin);
+                        return 0;
                     }
-                } else if (c == EOL || c == EOF) {
+                    else {
+                        state = S_LINE_COMMENT;
+                        break;
+                    }
+                }
+                else if(c == EOL)
+                    return 0;
+                else if (c == EOF){
                     ungetc(c, stdin);
-                    return;
-                }else {
+                    return 0;
+                    }
+                else {
                     state = S_LINE_COMMENT;
                     break;
                 }
             
             case S_MULT_COMMENT:
-                if (c == EOL || c == EOF) {
-                    ungetc(c,stdin);
-                    return;
+                if (c == ']'){
+                    c=getchar();
+                    if (c == ']'){
+                        return 0;
+                    }
+                    else if (c == EOF){
+                        set_error(LEXICAL_ERR);
+                        return 1;
+                    }
+                }
+                if (c == EOF) {
+                    set_error(LEXICAL_ERR);
+                    return 1;
                 } else {
                     state = S_MULT_COMMENT;
                     break;
                 }
-
         }
-
     }
-
 }
 
-void number(Token *token) {
-    char c;
+void number(Token *token, char c) {
     StateType state = S_INTEGER;
+    EXPAND_STR;
+
+    while (c=='0'){
+        c=getchar();
+    }
 
     while (1) {
-
-        c = getchar();
 
         switch(state){
             
@@ -172,7 +190,7 @@ void number(Token *token) {
                     char *junk = NULL;
                     token->attribs.integer =  (int) strtol( token->attribs.string, &junk, 10);
                     if (junk == NULL) {
-                        token->type = TT_NUMBER;
+                        token->type = TT_INTEGER;
                         ungetc(c, stdin);
                     } else {
                         set_error(LEXICAL_ERR);
@@ -222,7 +240,7 @@ void number(Token *token) {
                     break;
                 }else {
                     set_error(LEXICAL_ERR);
-                    break;
+                    return;
                 }
             
             case S_EX_PLUS_MINUS:
@@ -253,6 +271,7 @@ void number(Token *token) {
                 }
         
         }
+        c = getchar();
     }
 
 }
@@ -336,7 +355,7 @@ void string(Token *token){
                 }
 
             case S_ESC_NUM_ONE:
-                if (c >= '1' && c <= '9') {
+                if (c >= '0' && c <= '9') {
                     EXPAND_STR;
                     state = S_ESC_NUM_REST;
                     break;
@@ -360,7 +379,7 @@ void string(Token *token){
                 }
             
             case S_ESC_NUM_TWO_FIVE:
-                if (c=='5') {
+                if (c >= '0' && c  <= '5') {
                     EXPAND_STR;
                     state = S_STRING;
                     break;
@@ -374,30 +393,29 @@ void string(Token *token){
                     EXPAND_STR;
                     state = S_STRING;
                     break;
-                }
+                }else {
+                    set_error(LEXICAL_ERR);
+                    return;
+                } 
             
             case S_STRING_END:
-                if (c == '"') {
-                    token->type = TT_STRING;
-                    return;
-                }
+                token->type = TT_STRING;
+                return;
+                
 
         }
-
-
     }
-
 }
 
 void get_token(Token *token) {
 
-    char c = getchar();
+    char c;
     StateType state = S_START;
 
     init_token(token);     
 
     while (1){
-
+        c = getchar();
         switch(state) {
 
             case S_START:
@@ -406,13 +424,17 @@ void get_token(Token *token) {
                             token->type = TT_EOF;    /*staci doufam*/
                             return; 
                         } else if (c == '-') {                   /**HEY A MUZE BYT NECO JINEHO -- JAKO TREBA a-- ???????????*/
-                            dash_minus(token);
-                            return;
+                            if (dash_minus(token)){
+                                return;
+                            };
+                            state = S_START;
+                            break;
                         } else if (c == '"') {
                             string(token);
                             return;
-                        } else if   {
-
+                        } else if (c >= '0' && c<= '9'){
+                            number(token, c);
+                            return;
                         } else {
                             set_error(LEXICAL_ERR);
                             return;
