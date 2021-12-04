@@ -40,8 +40,6 @@ typedef enum {
     TT_INTEGER,
     TT_STRING,
 
-    TT_COMMENT,             //  comment
-    TT_MULT_COMMENT,        //  multiline comment 
     TT_IDENTIFIER,
     TT_KW_DO,
     TT_KW_ELSE,
@@ -73,7 +71,7 @@ typedef enum {
     
     //operators
     S_PLUS,
-    S_MINUS,
+    S_MINUS_COMMENT, // moze z toho vzinknut --
     S_MUL,
     S_DIV,
     S_FLOOR_DIV,
@@ -116,34 +114,14 @@ typedef enum {
     
     //comments
 
-    S_DASH,
     S_LINE_COMMENT,
-    S_START_MULT_COMMENT,
-    S_END_MULT_COMMENT,
+    S_DOUBLE_BRACKET,
+    S_MULT_COMMENT,
 
     S_IDENTIFIER
 
 } StateType;
 
-
-typedef enum {
-    KW_DO,
-    KW_ELSE,
-    KW_END,
-    KW_FUNCTION,
-    KW_GLOBAL,
-    KW_IF,
-    KW_INTEGER,
-    KW_LOCAL,
-    KW_NIL,
-    KW_NUMBER,
-    KW_REQUIRE,
-    KW_RETURN,
-    KW_STRING,
-    KW_THEN,
-    KW_WHILE
-    
-} KeyWord;
 
 
 /**
@@ -155,7 +133,6 @@ typedef struct {
     char *string; // TODO dynamicky string 
     int integer;
     double number;
-    KeyWord key_word; 
 
 } TokenAttributes;
 
