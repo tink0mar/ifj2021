@@ -83,15 +83,15 @@ bool data_types_list_others(ParserData *p_data, DataType **param_list, int *para
         {
 
         case TT_KW_STRING:
-            enum_append(&param_list, STR, param_len);
+            enum_append(param_list, STR, param_len);
             break;
 
         case TT_KW_NUMBER:
-            enum_append(&param_list, NUM, param_len);
+            enum_append(param_list, NUM, param_len);
             break;
 
         case TT_KW_INTEGER:
-            enum_append(&param_list, INT, param_len);
+            enum_append(param_list, INT, param_len);
             break;
         // TODO NIL
         default:
@@ -166,7 +166,7 @@ bool return_types_list_others_global(ParserData *p_data, DataType **return_list,
  * <return_types_list> -> : <data_type> <data_types_list_others>
  */
 
-bool return_types_list_global(ParserData *p_data, DataType *return_list, int *return_len)
+bool return_types_list_global(ParserData *p_data, DataType **return_list, int *return_len)
 {
     Token *token = p_data->token;
 
@@ -189,15 +189,15 @@ bool return_types_list_global(ParserData *p_data, DataType *return_list, int *re
             switch(token->type) 
             {
                 case TT_KW_STRING:
-                    enum_append(&return_list, STR, *return_len);
+                    enum_append(return_list, STR, *return_len);
                     break;
 
                 case TT_KW_NUMBER:
-                    enum_append(&return_list, NUM, *return_len);
+                    enum_append(return_list, NUM, *return_len);
                     break;
 
                 case TT_KW_INTEGER:
-                    enum_append(&return_list, INT, *return_len);
+                    enum_append(return_list, INT, *return_len);
                     break;
                 // TODO NIL
                 default:
