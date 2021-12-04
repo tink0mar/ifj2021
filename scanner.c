@@ -17,7 +17,8 @@
 #define EXPAND_STR if ( expand_string(&(token->attribs.string), c) == 1){ \
                         set_error(INTERNAL_ERR);\
                         return;\
-                    } \
+                        } \ 
+/*co mu tady vadi voe*/
 
 int expand_string(char **string, char c){
     int str_len;
@@ -49,7 +50,6 @@ int expand_string(char **string, char c){
 void init_token(Token *token){
     free(token->attribs.string);
     free(token->attribs.string);
-    
     return;
 }
 
@@ -77,7 +77,7 @@ void alphabet(Token *token, char c){
             if (strcmp(token->attribs.string, "global")){ token->type = TT_KW_GLOBAL; return; }
             if (strcmp(token->attribs.string, "if")){ token->type = TT_KW_IF; return; }
             if (strcmp(token->attribs.string, "integer")){ token->type = TT_KW_INTEGER; return; }
-            if (strcmp(token->attribs.string, "local")){ token->type = TT_KW_LOCAL; return }
+            if (strcmp(token->attribs.string, "local")){ token->type = TT_KW_LOCAL; return; }
             if (strcmp(token->attribs.string, "nil")){ token->type = TT_KW_NIL; return; }
             if (strcmp(token->attribs.string, "number")){ token->type = TT_KW_NUMBER; return; }
             if (strcmp(token->attribs.string, "require")){ token->type = TT_KW_REQUIRE; return; }
@@ -103,23 +103,24 @@ int dash_minus(Token *token){
 
             case S_MINUS_COMMENT:
                 if (c == '-') {
-                    state = S_LINE_COMMENT;
+                    state = S_LINE_COMMENT_CHECK;
                 } else {
                     token->type = TT_MINUS;
                     ungetc(c, stdin);
-                    return 0;
+                    return 1; /*wanna return, not error*/
                 }
                 break;
 
-            case S_LINE_COMMENT:
+            case S_LINE_COMMENT_CHECK:        /*TOTO JE BLBE NEPOZNA TO --ABC[[ */
                 if (c == '[') {
                     c = getchar();
                     if (c == '['){
                         state = S_MULT_COMMENT;
                         break;
                     } else if(c == EOL)
-                        return;
+                        return 0;
                     else if (c == EOF){
+                        //set_error(LEXICAL_ERR); //* TOTO NENI CHYBA*//
                         ungetc(c, stdin);
                         return 0;
                     }
@@ -138,7 +139,14 @@ int dash_minus(Token *token){
                     state = S_LINE_COMMENT;
                     break;
                 }
-            
+            case S_LINE_COMMENT:
+                if(c == EOL)
+                    return 0;
+                else if (c == EOF){
+                    //set_error(LEXICAL_ERR); //* TOTO NENI CHYBA*//
+                    ungetc(c, stdin);
+                    return 0;}
+                break;
             case S_MULT_COMMENT:
                 if (c == ']'){
                     c=getchar();
@@ -168,7 +176,11 @@ void number(Token *token, char c) {
     while (c=='0'){
         c=getchar();
     }
-
+    /*aby cislo nevypadalo jako 09.xyz ale 9.xyz*/
+    if (!strcmp(token->attribs.string, '0')){
+        if ( c > '0' && c<= '9')
+            token->attribs.string = c;
+    }
     while (1) {
 
         switch(state){
@@ -412,20 +424,18 @@ void get_token(Token *token) {
     char c;
     StateType state = S_START;
 
-    init_token(token);     
+    init_token(token);
 
     while (1){
         c = getchar();
         switch(state) {
-
             case S_START:
-                    switch (c) {
                         if (c == EOF) {
                             token->type = TT_EOF;    /*staci doufam*/
                             return; 
                         } else if (c == '-') {                   /**HEY A MUZE BYT NECO JINEHO -- JAKO TREBA a-- ???????????*/
                             if (dash_minus(token)){
-                                return;
+                                return; /**if error or just '-', operator*/
                             };
                             state = S_START;
                             break;
@@ -435,16 +445,56 @@ void get_token(Token *token) {
                         } else if (c >= '0' && c<= '9'){
                             number(token, c);
                             return;
-                        } else {
+                        } else if (c >= 'a' && c <= 'z' || c>='A' && c<='Z' || c == '_'){
+                            alphabet(token, c);
+                            return;
+                        }
+                        else if (c == '+') {token->type = TT_PLUS; return;}
+                        else if (c == '*') {token->type = TT_MUL; return;}
+                        else if (c == '/') {
+                            c = getchar();
+                            if (c == '/') token->type = TT_FLOOR_DIV;
+                            else {ungetc(c, stdin); token->type = TT_DIV;} 
+                            return;}
+                        else if (c == '#') {token->type = TT_HASHTAG; return;}
+                        else if (c == '>') {
+                            c = getchar();
+                            if (c == '=') token->type = TT_GREATER_OR_EQ;
+                            else {ungetc(c, stdin); token->type = TT_GREATER;} 
+                            return;}
+                        else if (c == '<') {
+                            c = getchar();
+                            if (c == '=') token->type = TT_LESS_OR_EQ;
+                            else {ungetc(c, stdin); token->type = TT_LESS;} 
+                            return;}
+                        else if (c == '~') {
+                            c = getchar();
+                            if (c == '=') token->type = TT_NOT_OR_EQ; /*chybka samotna right*/
+                            else {set_error(LEXICAL_ERR);} 
+                            return;}
+                        else if (c == '=') {
+                            c = getchar();
+                            if (c == '=') token->type = TT_EQ;
+                            else {ungetc(c, stdin); token->type = TT_ASSIGN;} 
+                            return;}
+                        else if (c == '(') {token->type = TT_LEFT_PAR; return;}
+                        else if (c == ')') {token->type = TT_RIGHT_PAR; return;}
+                        else if (c == ':') {token->type = TT_COLON; return;}
+                        else if (c == '.') {
+                            c = getchar();
+                            if (c == '.') token->type = TT_CONCAT;
+                            else set_error(LEXICAL_ERR);
+                            return;}                 /*ctyry tecky projdou ale*/
+                        else if (c == ',') {token->type = TT_COMMA; return;}
+                        else {
                             set_error(LEXICAL_ERR);
                             return;
                         }
-                        
-
-        }
-        
-}
-
+            default:
+                printf("sem se nemam co dostat jako\n");
+                return;   
+        }   
+    }
 }
 
 

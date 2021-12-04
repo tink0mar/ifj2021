@@ -30,7 +30,7 @@ typedef enum {
     TT_EQ,                  //  ==
     
     TT_ASSIGN,              //  =
-    TT_LEFT_PAR,            //  ()
+    TT_LEFT_PAR,            //  () //???
     TT_RIGHT_PAR,           //  )
     TT_COLON,               //  :
     TT_CONCAT,              //  ..
@@ -162,9 +162,16 @@ void get_token(Token *token);
  * 
  * @param string string where the c will be apended
  * @param c char to be appended
- * @return int 
+ * @return void
  */
 
 int expand_string(char **string, char c);
+void init_token(Token *token);
+void alphabet(Token *token, char c);
+int dash_minus(Token *token);
+void number(Token *token, char c);
+void string(Token *token);
+
+
 
 
