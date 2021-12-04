@@ -233,15 +233,15 @@ bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len)
         break;
 
     case TT_KW_STRING:
-        enum_append(&param_list, STR, *param_len);
+        enum_append(param_list, STR, *param_len);
         break;
 
     case TT_KW_NUMBER:
-        enum_append(&param_list, NUM, *param_len);
+        enum_append(param_list, NUM, *param_len);
         break;
 
     case TT_KW_INTEGER:
-        enum_append(&param_list, INT, *param_len);
+        enum_append(param_list, INT, *param_len);
         break;
     // TODO NIL
     default:
@@ -333,6 +333,28 @@ bool function_param_list(ParserData *p_data, bool is_global_call, TreeNode *func
 
     // MAM TOKEN
     Token *token = p_data->token;
+
+
+
+    switch (token->type)
+    {
+
+    case TT_STRING:
+        enum_append(param_list, STR, *param_len);
+        break;
+
+    case TT_NUMBER:
+        enum_append(param_list, NUM, *param_len);
+        break;
+
+    case TT_INTEGER:
+        enum_append(param_list, INT, *param_len);
+        break;
+    // TODO NIL
+    default:
+        set_error(SYNTACTIC_ERR);
+        return false;
+    }
 
     // Bad parameters
 }
@@ -461,7 +483,6 @@ int syntactic_analyzator()
 
     if (p_data == NULL)
     {
-        error_mess(INTERNAL_ERR);
         return INTERNAL_ERR;
     }
 
@@ -472,7 +493,6 @@ int syntactic_analyzator()
     }
     else
     {
-        error_mess(num_error);
         free_resources(p_data);
         return num_error;
     }
