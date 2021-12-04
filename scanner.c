@@ -6,7 +6,7 @@
  * Project: IFJ compiler
  * Date: 24.11.2021
  */ 
-
+#include <stdlib.h>
 #include "scanner.h" 
 #include "stdio.h"
 #include "string.h"
@@ -16,9 +16,7 @@
 #define EOL '\n'
 #define EXPAND_STR if ( expand_string(&(token->attribs.string), c) == 1){ \
                         set_error(INTERNAL_ERR);\
-                        return;\
-                        } \ 
-/*co mu tady vadi voe*/
+                        return; } \
 
 int expand_string(char **string, char c){
     int str_len;
@@ -48,8 +46,10 @@ int expand_string(char **string, char c){
  * @param 
  */
 void init_token(Token *token){
-    free(token->attribs.string);
-    free(token->attribs.string);
+
+    if ( token->attribs.string != NULL){
+        free(token->attribs.string);
+    }
     return;
 }
 
@@ -70,21 +70,21 @@ void alphabet(Token *token, char c){
         }
         else {
             ungetc(c, stdin);
-            if (strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
-            if (strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
-            if (strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
-            if (strcmp(token->attribs.string, "function")){ token->type = TT_KW_FUNCTION; return; }
-            if (strcmp(token->attribs.string, "global")){ token->type = TT_KW_GLOBAL; return; }
-            if (strcmp(token->attribs.string, "if")){ token->type = TT_KW_IF; return; }
-            if (strcmp(token->attribs.string, "integer")){ token->type = TT_KW_INTEGER; return; }
-            if (strcmp(token->attribs.string, "local")){ token->type = TT_KW_LOCAL; return; }
-            if (strcmp(token->attribs.string, "nil")){ token->type = TT_KW_NIL; return; }
-            if (strcmp(token->attribs.string, "number")){ token->type = TT_KW_NUMBER; return; }
-            if (strcmp(token->attribs.string, "require")){ token->type = TT_KW_REQUIRE; return; }
-            if (strcmp(token->attribs.string, "return")){ token->type = TT_KW_RETURN; return; }
-            if (strcmp(token->attribs.string, "string")){ token->type = TT_KW_STRING; return; }
-            if (strcmp(token->attribs.string, "then")){ token->type = TT_KW_THEN; return; }
-            if (strcmp(token->attribs.string, "while")){ token->type = TT_KW_WHILE; return;  }
+            if (!strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
+            if (!strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
+            if (!strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
+            if (!strcmp(token->attribs.string, "function")){ token->type = TT_KW_FUNCTION; return; }
+            if (!strcmp(token->attribs.string, "global")){ token->type = TT_KW_GLOBAL; return; }
+            if (!strcmp(token->attribs.string, "if")){ token->type = TT_KW_IF; return; }
+            if (!strcmp(token->attribs.string, "integer")){ token->type = TT_KW_INTEGER; return; }
+            if (!strcmp(token->attribs.string, "local")){ token->type = TT_KW_LOCAL; return; }
+            if (!strcmp(token->attribs.string, "nil")){ token->type = TT_KW_NIL; return; }
+            if (!strcmp(token->attribs.string, "number")){ token->type = TT_KW_NUMBER; return; }
+            if (!strcmp(token->attribs.string, "require")){ token->type = TT_KW_REQUIRE; return; }
+            if (!strcmp(token->attribs.string, "return")){ token->type = TT_KW_RETURN; return; }
+            if (!strcmp(token->attribs.string, "string")){ token->type = TT_KW_STRING; return; }
+            if (!strcmp(token->attribs.string, "then")){ token->type = TT_KW_THEN; return; }
+            if (!strcmp(token->attribs.string, "while")){ token->type = TT_KW_WHILE; return;  }
             token->type = TT_IDENTIFIER;
             return;
         }
@@ -139,6 +139,7 @@ int dash_minus(Token *token){
                     state = S_LINE_COMMENT;
                     break;
                 }
+
             case S_LINE_COMMENT:
                 if(c == EOL)
                     return 0;
@@ -147,6 +148,7 @@ int dash_minus(Token *token){
                     ungetc(c, stdin);
                     return 0;}
                 break;
+
             case S_MULT_COMMENT:
                 if (c == ']'){
                     c=getchar();
@@ -177,10 +179,11 @@ void number(Token *token, char c) {
         c=getchar();
     }
     /*aby cislo nevypadalo jako 09.xyz ale 9.xyz*/
-    if (!strcmp(token->attribs.string, '0')){
+    /**if (!strcmp(token->attribs.string, "0")){
         if ( c > '0' && c<= '9')
             token->attribs.string = c;
-    }
+    }*/
+    
     while (1) {
 
         switch(state){
@@ -430,7 +433,9 @@ void get_token(Token *token) {
         c = getchar();
         switch(state) {
             case S_START:
-                        if (c == EOF) {
+                        if (c == ' ' || c == '\n' || c == '\t'){
+                            continue;
+                        }else if (c == EOF) {
                             token->type = TT_EOF;    /*staci doufam*/
                             return; 
                         } else if (c == '-') {                   /**HEY A MUZE BYT NECO JINEHO -- JAKO TREBA a-- ???????????*/
@@ -445,7 +450,7 @@ void get_token(Token *token) {
                         } else if (c >= '0' && c<= '9'){
                             number(token, c);
                             return;
-                        } else if (c >= 'a' && c <= 'z' || c>='A' && c<='Z' || c == '_'){
+                        } else if ( (c >= 'a' && c <= 'z') || (c>='A' && c<='Z' || c == '_') ){
                             alphabet(token, c);
                             return;
                         }

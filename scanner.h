@@ -11,6 +11,9 @@
  * @enum Types of tokens
  */
 
+#ifndef SCANNER_H_
+#define SCANNER_H_
+
 typedef enum {
     TT_EOF,                 // End of file
     TT_EOL,                 //  \n        // idk ci to potrebujeme
@@ -58,6 +61,7 @@ typedef enum {
     TT_KW_WHILE
 
 } TokenType;
+
 
 
 /**
@@ -115,6 +119,7 @@ typedef enum {
     //comments
 
     S_LINE_COMMENT,
+    S_LINE_COMMENT_CHECK,
     S_DOUBLE_BRACKET,
     S_MULT_COMMENT,
 
@@ -172,3 +177,5 @@ void alphabet(Token *token, char c);
 int dash_minus(Token *token);
 void number(Token *token, char c);
 void string(Token *token);
+
+#endif 
