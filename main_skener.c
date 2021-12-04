@@ -61,6 +61,7 @@ int main (){
 
     while(1){
         get_token(token);
+<<<<<<< HEAD
         if (num_error != 0){
             error_mess(num_error);
             return 0;
@@ -74,6 +75,21 @@ int main (){
         printf("%s ", tks[token->type]);
         printf("%s\n", token->attribs.string);
 
+=======
+      
+
+        if (num_error != 0){
+            error_mess(num_error);
+            return 0;
+        }
+  if (token->type == TT_EOF){
+            printf("KONIEC");
+            return 0;
+        }
+        printf("%s\n", tks[token->type]);
+        printf("string: %s\n", token->attribs.string);
+        printf("first:%d second:%f",token->attribs.integer, token->attribs.number);
+>>>>>>> e8e4233701edcd65d71656060c1217dc6afed31a
 
     }
 

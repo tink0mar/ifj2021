@@ -72,7 +72,6 @@ void alphabet(Token *token, char c){
         }
         else {
             ungetc(c, stdin);
-            printf("here\n");
             if (!strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
             if (!strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
             if (!strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
@@ -200,12 +199,13 @@ void number(Token *token, char c) {
                 } else if (c == 'E' || c == 'e'){
                     EXPAND_STR;
                     state = S_EXPONENT;
-                    break;   
+                    break;
                 } else if (c == '.') {
                     EXPAND_STR;
                     state = S_DOT;
                     break;
                 }else {
+                    printf("jsme u vypisu\n");
                     char *junk = NULL;
                     token->attribs.integer =  (int) strtol( token->attribs.string, &junk, 10);
                     if (strlen(junk) == 0) {
@@ -239,13 +239,18 @@ void number(Token *token, char c) {
                     state = S_EXPONENT;
                     break;
                 } else {
+<<<<<<< HEAD
                     
+=======
+>>>>>>> e8e4233701edcd65d71656060c1217dc6afed31a
                     char *junk = NULL;
                     token->attribs.number = strtod( token->attribs.string, &junk);
                     if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
+                    printf("set err %s", junk);
+
                         set_error(LEXICAL_ERR);
                     }
                     return;
