@@ -31,7 +31,7 @@ int expand_string(char **string, char c){
     }
     
     if (ptr == NULL){
-        return 99;
+        return 1;
     } else {
         
         ptr[index] = c;
@@ -48,7 +48,6 @@ int expand_string(char **string, char c){
 void init_token(Token *token){
 
     if (token->attribs.string != NULL){
-        printf("freee\n");
         int size = strlen(token->attribs.string);
         free(token->attribs.string);
         token->attribs.string = NULL;
@@ -193,7 +192,7 @@ void number(Token *token, char c) {
         switch(state){
             
             case S_INTEGER:
-                printf("s_integer\n");
+                
                 if ( c >= '0' && c <= '9'){
                     EXPAND_STR;
                     state = S_INTEGER;
@@ -209,7 +208,7 @@ void number(Token *token, char c) {
                 }else {
                     char *junk = NULL;
                     token->attribs.integer =  (int) strtol( token->attribs.string, &junk, 10);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_INTEGER;
                         ungetc(c, stdin);
                     } else {
@@ -229,9 +228,9 @@ void number(Token *token, char c) {
                 } 
             
             case S_NUMBER_NO_EX:
-                printf("s_number_no_ex");
+                
                 if (c >= '0' && c <= '9') {
-                    printf("s_number_no_ex");
+                    
                     EXPAND_STR;
                     state = S_NUMBER_NO_EX;
                     break;
@@ -240,10 +239,10 @@ void number(Token *token, char c) {
                     state = S_EXPONENT;
                     break;
                 } else {
-                    printf("s_number_no_ex");
+                    
                     char *junk = NULL;
                     token->attribs.number = strtod( token->attribs.string, &junk);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
@@ -284,7 +283,7 @@ void number(Token *token, char c) {
                 } else {
                     char *junk;
                     token->attribs.number = strtod( token->attribs.string, &junk);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
@@ -312,13 +311,13 @@ void string(Token *token){
             case S_STRING:
                 
                 if (c == '"'){
-                    token->attribs.string = "";
                     state = S_STRING_END;
                     break;
                 } else if (c == '\\'){
+                    EXPAND_STR;
                     state = S_ESCAPE;
                     break;
-                } else if (c > 32 && c <= 255) {
+                } else if (c >= 1 && c <= 255) {
                     state = S_STRING;
                     EXPAND_STR;
                     break;
@@ -328,7 +327,7 @@ void string(Token *token){
                 } 
 
             case S_ESCAPE:
-
+                // spytat sa
                 if (c == '\\' || c == 'n' || c == 't' || c == '"') {
                     state = S_STRING;
                     EXPAND_STR;
