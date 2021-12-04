@@ -19,23 +19,23 @@
                         return; } \
 
 int expand_string(char **string, char c){
-    int str_len;
+    int str_len, index;
+    char *ptr;
 
     if (*string == NULL) {
-        str_len = 1;
+        index = 0;
+        ptr = realloc( *string , sizeof(char) * (2) );
     } else {    
-        str_len = (int)strlen(*string);
+        index = (int)strlen(*string);
+        ptr = realloc( *string , sizeof(char) * (index + 1) );
     }
-
-    char *ptr = (char *)realloc( *string , sizeof(char) * (str_len+1) );
     
     if (ptr == NULL){
-
-        return 1;
+        return 99;
     } else {
         
-        ptr[str_len] = c;
-        ptr[str_len+1] = '\0'; 
+        ptr[index] = c;
+        ptr[index+1] = '\0'; 
         
         *string = ptr;
         return 0;
@@ -47,8 +47,11 @@ int expand_string(char **string, char c){
  */
 void init_token(Token *token){
 
-    if ( token->attribs.string != NULL){
+    if (token->attribs.string != NULL){
+        printf("freee\n");
+        int size = strlen(token->attribs.string);
         free(token->attribs.string);
+        token->attribs.string = NULL;
     }
     return;
 }
@@ -70,6 +73,7 @@ void alphabet(Token *token, char c){
         }
         else {
             ungetc(c, stdin);
+            printf("here\n");
             if (!strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
             if (!strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
             if (!strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
@@ -175,9 +179,9 @@ void number(Token *token, char c) {
     StateType state = S_INTEGER;
     EXPAND_STR;
 
-    while (c=='0'){
+   /* while (c=='0'){
         c=getchar();
-    }
+    }*/
     /*aby cislo nevypadalo jako 09.xyz ale 9.xyz*/
     /**if (!strcmp(token->attribs.string, "0")){
         if ( c > '0' && c<= '9')
@@ -185,10 +189,11 @@ void number(Token *token, char c) {
     }*/
     
     while (1) {
-
+        c = getchar();
         switch(state){
             
             case S_INTEGER:
+                printf("s_integer\n");
                 if ( c >= '0' && c <= '9'){
                     EXPAND_STR;
                     state = S_INTEGER;
@@ -224,7 +229,9 @@ void number(Token *token, char c) {
                 } 
             
             case S_NUMBER_NO_EX:
-                if (c >= '0' <= '9') {
+                printf("s_number_no_ex");
+                if (c >= '0' && c <= '9') {
+                    printf("s_number_no_ex");
                     EXPAND_STR;
                     state = S_NUMBER_NO_EX;
                     break;
@@ -233,6 +240,7 @@ void number(Token *token, char c) {
                     state = S_EXPONENT;
                     break;
                 } else {
+                    printf("s_number_no_ex");
                     char *junk = NULL;
                     token->attribs.number = strtod( token->attribs.string, &junk);
                     if (junk == NULL) {
@@ -286,7 +294,6 @@ void number(Token *token, char c) {
                 }
         
         }
-        c = getchar();
     }
 
 }
