@@ -136,8 +136,20 @@ TreeNode *bst_search(TreeNode *tree, char *key);  //vrati true ked najde
  *
  * @param stack  The address of root node
  * @param key wanted node name
+ *
+ * @return true node was found / false otherwise
  */
 TreeNode * bst_search_in_stack(SymStack *stack, char *key);  //vrati true ked najde
+
+/**
+ * @brief Search for node in stack
+ *
+ * @param stack  The address of root node
+ * @param key wanted node name
+ *
+ * @return true node was found with correct data type / false otherwise
+ */
+bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id);  //vrati true ked najde
 
 /**
  * @brief Insert a node
@@ -145,12 +157,12 @@ TreeNode * bst_search_in_stack(SymStack *stack, char *key);  //vrati true ked na
  * @param tree The address of root node
  * @param key node name
  * @param id node data type
- * 
- * @return true node was inserted 
+ *
+ * @return true node was inserted
  * @return false node was not inserted
- * 
+ *
  * @error 99 not compilation fault
- * @error 3 redefinition of variable / not definited variable 
+ * @error 3 redefinition of variable / not definited variable
  */
 bool bst_insert(TreeNode **tree, char *key, DataType id); //bude insertne alebo vrati chybu
 
@@ -165,12 +177,12 @@ bool bst_insert(TreeNode **tree, char *key, DataType id); //bude insertne alebo 
  * @param return_type node return types
  * @param cnt_return_type number of node return types
  * @param is_defined node definitions
- * 
- * @return true node was inserted 
+ *
+ * @return true node was inserted
  * @return false node was not inserted
- * 
+ *
  * @error 99 not compilation fault
- * @error 3 redefinition of variable / not definited variable 
+ * @error 3 redefinition of variable / not definited variable
  */
 bool bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type, DataType *param_type, int cnt_return_type, DataType *return_type, bool is_defined); //bude insertne alebo vrati chybu
 
