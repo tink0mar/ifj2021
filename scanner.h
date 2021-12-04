@@ -152,6 +152,7 @@ typedef struct {
  * 
  * @return TToken* 
  */
+
 void get_token(Token *token);
 
 /**
@@ -171,7 +172,3 @@ void alphabet(Token *token, char c);
 int dash_minus(Token *token);
 void number(Token *token, char c);
 void string(Token *token);
-
-
-
-

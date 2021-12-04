@@ -8,54 +8,60 @@
  */
 
 #include "symtable.h"
-#include <stdlib.h>
+#include "error.h"
+#include <stdbool.h>
+#include <stdio.h>
+
 
 int STACK_SIZE = MAX_STACK;
 
-void Stack_Init( Stack *Stack) {
+void sym_stack_init( SymStack *stack) {
 
-    if (Stack == NULL) {
+    if (stack == NULL) {
+        set_error(INTERNAL_ERR);
         return;
     } else {
-        Stack->topIndex = -1;
+        stack->topIndex = -1;
 
     }
 }
-int Stack_IsEmpty( const Stack *Stack ) {
-    return Stack->topIndex == -1;
+bool sym_stack_is_empty( const SymStack *stack ) {
+    return stack->topIndex == -1;
 }
 
-int Stack_IsFull( const Stack *Stack ) {
+bool sym_stack_is_full( const SymStack *stack ) {
 
 
-    return Stack->topIndex == STACK_SIZE-1;
+    return stack->topIndex == STACK_SIZE-1;
 }
 
-TreeNode *Stack_Top( const Stack *Stack){
-    if(Stack_IsEmpty(Stack))
+TreeNode *sym_stack_top( const SymStack *stack){
+    if(sym_stack_is_empty(stack))
     {
         return NULL;
     }
-    return Stack->array[Stack->topIndex];
+    return stack->array[stack->topIndex];
 }
-void Stack_Pop( Stack *Stack ){
-    if(!Stack_IsEmpty(Stack))
+void stack_pop( SymStack *stack ){
+    if(!sym_stack_is_empty(stack))
     {
-        Stack->topIndex -= 1;
+        stack->topIndex -= 1;
     }
 }
-void Stack_Push( Stack *Stack, TreeNode *root ) {
-    if (Stack_IsFull(Stack)) {
+void sym_stack_push( SymStack *stack, TreeNode *root ) {
+    if (sym_stack_is_full(stack)) {
         return;
     } else {
-        Stack->topIndex++;
-        Stack->array[Stack->topIndex] = root;
+        stack->topIndex++;
+        stack->array[stack->topIndex] = root;
+
+
     }
 }
-void Stack_Dispose( Stack *Stack, TreeNode *ptr ){
-    while (Stack->topIndex != -1){
-        ptr = Stack_Top(Stack);
+void sym_stack_dispose( SymStack *stack){
+    while (stack->topIndex != -1){
+        TreeNode *ptr = sym_stack_top(stack);
         bst_dispose(&ptr);
-        Stack_Pop(Stack);
+        stack_pop(stack);
     }
 }

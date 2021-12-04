@@ -38,6 +38,6 @@ void error_mess(int num_err);
  * @param err
  */
 
-void set_error(int err)
+void set_error(int err);
 
 #endif 
