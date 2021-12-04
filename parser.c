@@ -13,8 +13,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "symtable.h"
-#include "enum_list.h" 
-
+#include "enum_list.h"
 
 void free_resources(ParserData *p_data){
 
@@ -57,55 +56,148 @@ ParserData *parser_init()
 }
 
 
+/**
+ * <param_list_others> -> eps
+ * <param_list_others> -> , ID : <data_type> <param_list_others>
+ */
+bool param_list_others(ParserData *p_data, DataType **param_list, int *param_len) {
+    Token *token = p_data->token;
+
+    GET_TOKEN(token, p_data->get_token); 
+
+    switch(token->type) {
+        case TT_COMMA:
+        
+            GET_TOKEN(token, p_data->get_token);
+
+            GET_TOKEN(token, p_data->get_token);
+            //check if token is identifier
+            CHECK_VARS(token->type, TT_IDENTIFIER ,SYNTACTIC_ERR);
+            
+            char *id = token->attribs.string;
+
+            GET_TOKEN(token, p_data->get_token);
+            //check if token is colon
+            CHECK_VARS(token->type, TT_COLON ,SYNTACTIC_ERR);
+
+            switch (token->type){
+
+                case TT_KW_STRING:
+                    enum_append(param_list, STR, param_len);
+                    break;
+                case TT_KW_NUMBER:
+                    enum_append(param_list, NUM, param_len);
+                    break;
+                case TT_KW_INTEGER:
+                    enum_append(param_list, INT, param_len);
+                    break;
+                // TODO NIL
+                default:
+                    return false;
+            }
+
+            return param_list_others(p_data, param_list, param_len);
+        
+        //eps
+        case TT_RIGHT_PAR:
+            return true;
+        
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;
+    }
+}
+
 
 /**
- * <data_types_list_others> -> eps
- * <data_types_list_others> -> , <data_types> <data_types_list_others>
+ * <param_list> -> eps
+ * <param_list> -> ID : <data_type> <param_list_others>
  */
 
-bool data_types_list_others(ParserData *p_data, DataType **param_list, int *param_len)
-{
+bool param_list_func(ParserData *p_data, DataType **param_list, int *param_len){
     Token *token = p_data->token;
 
     GET_TOKEN(token, p_data->get_token);
 
-    // eps
-    if (token->type == TT_RIGHT_PAR)
-    {
-        return true;
-    }
-    else if (token->type == TT_COMMA)
-    { // check comma after data_type
+    switch(token->type){
+        //eps
+        case TT_RIGHT_PAR:
+            return true;
+
+        case TT_IDENTIFIER:
+            char *id = token->attribs.string;
+
+            GET_TOKEN(token, p_data->get_token);
+            //check if token is colon
+            CHECK_VARS(token->type, TT_COLON ,SYNTACTIC_ERR);
+            
+            GET_TOKEN(token, p_data->get_token);
+
+            switch(token->type){
+
+                case TT_KW_STRING:
+                    enum_append(param_list, STR, param_len);
+                    break;
+                case TT_KW_NUMBER:
+                    enum_append(param_list, NUM, param_len);
+                    break;
+                case TT_KW_INTEGER:
+                    enum_append(param_list, INT, param_len);
+                    break;
+                // TODO NIL
+                default:
+                    set_error(SYNTACTIC_ERR);
+                    return false;
+            }
+
+            return param_list_others(p_data, param_list, param_len);
+            
+        }
+
+}
+
+
+
+
+/**
+ *  <body> -> FUNCTION ID ( <param_list> ) <return_types_list> <block> END <body>
+ */
+
+bool function_def(ParserData *p_data) {
+    Token *token = p_data->token;
+    
+    GET_TOKEN(token, p_data->get_token);
+
+    int return_len = 0;
+    int param_len = 0;
+
+    DataType *param_list = NULL;
+    DataType *return_list = NULL;
+
+    if (token->type == TT_IDENTIFIER){
+        char *func = token->attribs.string;
 
         GET_TOKEN(token, p_data->get_token);
 
-        switch (token->type)
-        {
+        //check variable if LEFT PARENTHISE
+        CHECK_VARS(token->type, TT_LEFT_PAR, SYNTACTIC_ERR);
 
-        case TT_KW_STRING:
-            enum_append(param_list, STR, param_len);
-            break;
-
-        case TT_KW_NUMBER:
-            enum_append(param_list, NUM, param_len);
-            break;
-
-        case TT_KW_INTEGER:
-            enum_append(param_list, INT, param_len);
-            break;
-        // TODO NIL
-        default:
-            set_error(SYNTACTIC_ERR);
+        GET_TOKEN(token, p_data->get_token);
+        
+        if ( param_list_func(p_data, &param_list, &param_len) ){
+            
+            if ( )
+            return bst_insert_fun( &(p_data->global_frame), func, FUN, 0, NULL, 0, NULL);
+        
+        } else {
             return false;
         }
 
-        return data_types_list_others(p_data, param_list, param_len);
-    }
-    else
-    {
+    } else {
         set_error(SYNTACTIC_ERR);
         return false;
     }
+
 }
 
 /**
@@ -117,46 +209,42 @@ bool return_types_list_others_global(ParserData *p_data, DataType **return_list,
 
     Token *token = p_data->token;
 
-    GET_TOKEN(token, p_data->get_token);
+    GET_TOKEN(token, p_data->get_token); 
 
-    if (token->type == TT_COMMA) {
+
+    switch(token->type) {
+        case TT_COMMA:
         
-        GET_TOKEN(token, p_data->get_token);
+            GET_TOKEN(token, p_data->get_token);
 
-        switch (token->type){
+            switch (token->type){
 
-            case TT_KW_STRING:
-                enum_append(return_list, STR, return_len);
-                break;
-            case TT_KW_NUMBER:
-                enum_append(return_list, NUM, return_len);
-                break;
-            case TT_KW_INTEGER:
-                enum_append(return_list, INT, return_len);
-                break;
-            // TODO NIL
-            default:
-                return false;
-        }
+                case TT_KW_STRING:
+                    enum_append(return_list, STR, return_len);
+                    break;
+                case TT_KW_NUMBER:
+                    enum_append(return_list, NUM, return_len);
+                    break;
+                case TT_KW_INTEGER:
+                    enum_append(return_list, INT, return_len);
+                    break;
+                // TODO NIL
+                default:
+                    return false;
+            }
 
-        return_types_list_others_global(p_data, return_list, return_len);
-
-
-    } else {
-        switch(token->type) {
-            
-            //eps
-            case TT_EOF:
-            case TT_KW_GLOBAL:
-            case TT_KW_FUNCTION:
-            case TT_IDENTIFIER:
-                p_data->get_token = false;
-                return true;
-            
-            default:
-                set_error(SYNTACTIC_ERR);
-                return false;
-        }
+            return_types_list_others_global(p_data, return_list, return_len);
+        
+        case TT_EOF:
+        case TT_KW_GLOBAL:
+        case TT_KW_FUNCTION:
+        case TT_IDENTIFIER:
+            p_data->get_token = false;
+            return true;
+        
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;
     }
 }
 
@@ -166,10 +254,8 @@ bool return_types_list_others_global(ParserData *p_data, DataType **return_list,
  * <return_types_list> -> : <data_type> <data_types_list_others>
  */
 
-bool return_types_list_global(ParserData *p_data, DataType **return_list, int *return_len)
-{
+bool return_types_list_global(ParserData *p_data, DataType **return_list, int *return_len){
     Token *token = p_data->token;
-
     GET_TOKEN(token, p_data->get_token);
 
     switch (token->type)
@@ -215,38 +301,82 @@ bool return_types_list_global(ParserData *p_data, DataType **return_list, int *r
 }
 
 /**
+ * <data_types_list_others> -> eps
+ * <data_types_list_others> -> , <data_types> <data_types_list_others>
+ */
+
+bool data_types_list_others(ParserData *p_data, DataType **param_list, int *param_len) {
+    
+    Token *token = p_data->token;
+    GET_TOKEN(token, p_data->get_token);
+
+    // eps
+    if (token->type == TT_RIGHT_PAR){
+        return true;
+    } else if (token->type == TT_COMMA) { 
+        // check comma after data_type
+
+        GET_TOKEN(token, p_data->get_token);
+
+        switch (token->type)
+        {
+
+            case TT_KW_STRING:
+                enum_append(param_list, STR, param_len);
+                break;
+
+            case TT_KW_NUMBER:
+                enum_append(param_list, NUM, param_len);
+                break;
+
+            case TT_KW_INTEGER:
+                enum_append(param_list, INT, param_len);
+                break;
+            case TT_KW_NIL:
+            default:
+                set_error(SYNTACTIC_ERR);
+                return false;
+        }
+
+        return data_types_list_others(p_data, param_list, param_len);
+    
+    } else {
+        set_error(SYNTACTIC_ERR);
+        return false;
+    }
+}
+
+
+/**
  * <data_types_list> -> eps
  * <data_types_list> -> <data_type> <data_types_list_others>
  */
-bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len)
-{
-
+bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len){
+    
     Token *token = p_data->token;
-
     GET_TOKEN(token, p_data->get_token);
 
     switch (token->type)
     {
-    case TT_RIGHT_PAR:
-        // eps
-        return true;
-        break;
+        case TT_RIGHT_PAR:
+            // eps
+            return true;
 
-    case TT_KW_STRING:
-        enum_append(param_list, STR, *param_len);
-        break;
+        case TT_KW_STRING:
+            enum_append(param_list, STR, *param_len);
+            break;
 
-    case TT_KW_NUMBER:
-        enum_append(param_list, NUM, *param_len);
-        break;
+        case TT_KW_NUMBER:
+            enum_append(param_list, NUM, *param_len);
+            break;
 
-    case TT_KW_INTEGER:
-        enum_append(param_list, INT, *param_len);
-        break;
-    // TODO NIL
-    default:
-        set_error(SYNTACTIC_ERR);
-        return false;
+        case TT_KW_INTEGER:
+            enum_append(param_list, INT, *param_len);
+            break;
+        // TODO NIL
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;
     }
 
     return data_types_list_others(p_data, param_list, param_len);
@@ -259,8 +389,8 @@ bool global(ParserData *p_data)
 {
     Token *token = p_data->token;
     // parametre a navratove type
-    int return_len;
-    int param_len;
+    int return_len = 0;
+    int param_len = 0;
 
     DataType *param_list = NULL;
     DataType *return_list = NULL;
@@ -311,12 +441,10 @@ bool global(ParserData *p_data)
     }
 }
 
-bool function_param_list_others(ParserData *p_data, bool is_global_call)
+bool function_param_list_others(ParserData *p_data, bool global_call)
 {
 
     Token *token = p_data->token;
-    DataType *params = NULL;
-    // Bad parameters
 
     return true;
 }
@@ -328,41 +456,51 @@ bool function_param_list_others(ParserData *p_data, bool is_global_call)
  * <function_param_list_others> -> , <function_param> <function_param_list_others
  */
 
-bool function_param_list(ParserData *p_data, bool is_global_call, TreeNode *func)
+bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
 {
 
     // MAM TOKEN
     Token *token = p_data->token;
-
-
+    DataType *param_list;
+    int *param_len;
 
     switch (token->type)
     {
+        case TT_STRING:
+            //generate parameter
+            enum_append(&param_list, STR, *param_len);
+            break;
 
-    case TT_STRING:
-        enum_append(param_list, STR, *param_len);
-        break;
+        case TT_NUMBER:
+            //generate parameter
+            enum_append(&param_list, NUM, *param_len);
+            break;
 
-    case TT_NUMBER:
-        enum_append(param_list, NUM, *param_len);
-        break;
+        case TT_INTEGER:
+            // generate parameter
+            enum_append(&param_list, INT, *param_len);
+            break;
+        case TT_KW_NIL:
+            enum_append(&param_list, NIL, *param_len);
+            break;
 
-    case TT_INTEGER:
-        enum_append(param_list, INT, *param_len);
-        break;
-    // TODO NIL
-    default:
-        set_error(SYNTACTIC_ERR);
-        return false;
+        default:
+            set_error(SYNTACTIC_ERR);
+            return false;
     }
 
-    // Bad parameters
+    if (function_param_list_others(p_data, &param_list, )) {
+
+    } else {
+
+    }
+
 }
 
 /**
  * <function_call> -> ID ( <function_param_list> )
  */
-bool function_call(ParserData *p_data)
+bool function_call(ParserData *p_data, bool global_call)
 {
 
     Token *token = p_data->token;
@@ -379,8 +517,7 @@ bool function_call(ParserData *p_data)
     }
 
     // check if function was defined
-    CHECK_VARS(func->fun_extension->is_defined, true, SEM_UNDEFINED_ERR);
-
+    CHECK_VARS(func->fun_extension->is_func_defined, true, SEM_UNDEFINED_ERR);
 
     // check left parenthise
     GET_TOKEN(token, p_data->get_token);
@@ -390,13 +527,14 @@ bool function_call(ParserData *p_data)
 
     // <function_param_list> -> eps
     if (token->type == TT_RIGHT_PAR)
-    {
-
+    {   
         // TODO CALL EMPTY function
+
+        //generuj call pre funkciu pouzi GLOBAL_CALL
 
         return true;
     }
-    else if (function_param_list(p_data, is_global_call, func))
+    else if (function_param_list(p_data, global_call, func))
     {
 
         return true;
@@ -431,11 +569,11 @@ bool body(ParserData *p_data)
             break;
         // function
         case TT_KW_FUNCTION:
-            return body(p_data);
+            return function_def(p_data) && body(p_data);
             break;
         // call function
         case TT_IDENTIFIER:
-            return function_call(p_data) && body(p_data);
+            return function_call(p_data, true) && body(p_data);
             break;
         default:
             set_error(SYNTACTIC_ERR);

@@ -27,6 +27,11 @@
         return false; \
     }\
 
+#define ENUM_APPEND(LIST, TYPE, LEN) \
+    if (enum_append(LIST, TYPE, LEN) == false){ \
+        set_error(INTERNAL_ERROR); \
+        return false; \
+    }\
 
 typedef struct {
 
