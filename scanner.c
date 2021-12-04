@@ -239,18 +239,12 @@ void number(Token *token, char c) {
                     state = S_EXPONENT;
                     break;
                 } else {
-<<<<<<< HEAD
-                    
-=======
->>>>>>> e8e4233701edcd65d71656060c1217dc6afed31a
                     char *junk = NULL;
                     token->attribs.number = strtod( token->attribs.string, &junk);
                     if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
-                    printf("set err %s", junk);
-
                         set_error(LEXICAL_ERR);
                     }
                     return;
