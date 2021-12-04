@@ -114,7 +114,7 @@ void sym_stack_push( SymStack *stack, TreeNode *root );
  *
  * @param stack
  */
-void sym_stack_dispose( SymStack *stack, TreeNode *ptr );
+void sym_stack_dispose( SymStack *stack);
 
 /**
  * @brief Tree initialization
