@@ -61,16 +61,16 @@ int main (){
 
     while(1){
         get_token(token);
-       /* if (token->type == TT_EOF){
-            printf("KONIEC");
-            return 0;
-        }*/
+      
 
-        /*if (num_error != 0){
+        if (num_error != 0){
             error_mess(num_error);
             return 0;
-        }*/
-
+        }
+  if (token->type == TT_EOF){
+            printf("KONIEC");
+            return 0;
+        }
         printf("%s\n", tks[token->type]);
         printf("string: %s\n", token->attribs.string);
         printf("first:%d second:%f",token->attribs.integer, token->attribs.number);

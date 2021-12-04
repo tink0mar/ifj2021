@@ -73,7 +73,6 @@ void alphabet(Token *token, char c){
         }
         else {
             ungetc(c, stdin);
-            printf("here\n");
             if (!strcmp(token->attribs.string, "do")) { token->type = TT_KW_DO; return;}
             if (!strcmp(token->attribs.string, "else")){ token->type = TT_KW_ELSE; return; }
             if (!strcmp(token->attribs.string, "end")){ token->type = TT_KW_END; return; }
@@ -201,15 +200,16 @@ void number(Token *token, char c) {
                 } else if (c == 'E' || c == 'e'){
                     EXPAND_STR;
                     state = S_EXPONENT;
-                    break;   
+                    break;
                 } else if (c == '.') {
                     EXPAND_STR;
                     state = S_DOT;
                     break;
                 }else {
+                    printf("jsme u vypisu\n");
                     char *junk = NULL;
                     token->attribs.integer =  (int) strtol( token->attribs.string, &junk, 10);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_INTEGER;
                         ungetc(c, stdin);
                     } else {
@@ -240,13 +240,14 @@ void number(Token *token, char c) {
                     state = S_EXPONENT;
                     break;
                 } else {
-                    printf("s_number_no_ex");
                     char *junk = NULL;
                     token->attribs.number = strtod( token->attribs.string, &junk);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
+                    printf("set err %s", junk);
+
                         set_error(LEXICAL_ERR);
                     }
                     return;
@@ -284,7 +285,7 @@ void number(Token *token, char c) {
                 } else {
                     char *junk;
                     token->attribs.number = strtod( token->attribs.string, &junk);
-                    if (junk == NULL) {
+                    if (strlen(junk) == 0) {
                         token->type = TT_NUMBER;
                         ungetc(c, stdin);
                     } else {
@@ -312,13 +313,12 @@ void string(Token *token){
             case S_STRING:
                 
                 if (c == '"'){
-                    token->attribs.string = "";
                     state = S_STRING_END;
                     break;
                 } else if (c == '\\'){
                     state = S_ESCAPE;
                     break;
-                } else if (c > 32 && c <= 255) {
+                } else if (c >= 1 && c <= 255) {
                     state = S_STRING;
                     EXPAND_STR;
                     break;
