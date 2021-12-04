@@ -52,6 +52,24 @@ TreeNode *bst_search_in_stack(SymStack *stack, char *key){
     stack->topIndex = a;
     return NULL;
 
+}
+
+bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id){
+    int a = stack->topIndex;
+    TreeNode *k;
+    while(stack->topIndex != -1)
+    {
+        TreeNode *tree = sym_stack_top(stack);
+        k = bst_search(tree, key);
+        if(k != NULL)
+        {
+            stack->topIndex = a;
+            return k->id == id;
+        }
+        stack->topIndex--;
+    }
+    stack->topIndex = a;
+    return false;
 
 }
 
