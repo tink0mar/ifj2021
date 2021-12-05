@@ -29,7 +29,7 @@ typedef enum {
     TT_LESS,                //  <
     TT_GREATER_OR_EQ,       //  >=
     TT_LESS_OR_EQ,          //  <=
-    TT_NOT_EQ,           //  ~=
+    TT_NOT_EQ,              //  ~=
     TT_EQ,                  //  ==
 
     TT_ASSIGN,              //  =
@@ -86,7 +86,7 @@ typedef enum {
     S_GREATER_OR_EQ,
     S_LESS_OR_EQ,
     S_TILDE,
-    S_NOT_OR_EQ,
+    S_NOT_EQ,
     S_EQ,
 
     S_ASSIGN,
