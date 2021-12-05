@@ -11,6 +11,9 @@
  * @enum Types of tokens
  */
 
+#ifndef SCANNER_H_
+#define SCANNER_H_
+
 typedef enum {
     TT_EOF,                 // End of file
     TT_EOL,                 //  \n        // idk ci to potrebujeme
@@ -30,7 +33,7 @@ typedef enum {
     TT_EQ,                  //  ==
     
     TT_ASSIGN,              //  =
-    TT_LEFT_PAR,            //  ()
+    TT_LEFT_PAR,            //  () //???
     TT_RIGHT_PAR,           //  )
     TT_COLON,               //  :
     TT_CONCAT,              //  ..
@@ -40,8 +43,6 @@ typedef enum {
     TT_INTEGER,
     TT_STRING,
 
-    TT_COMMENT,             //  comment
-    TT_MULT_COMMENT,        //  multiline comment 
     TT_IDENTIFIER,
     TT_KW_DO,
     TT_KW_ELSE,
@@ -62,17 +63,19 @@ typedef enum {
 } TokenType;
 
 
+
 /**
  * @enum Enumerate for states 
  */
 
 typedef enum {
 
+    S_START,            //co toto to?
     S_EOF,
     
     //operators
     S_PLUS,
-    S_MINUS,
+    S_MINUS_COMMENT, // moze z toho vzinknut --
     S_MUL,
     S_DIV,
     S_FLOOR_DIV,
@@ -115,34 +118,15 @@ typedef enum {
     
     //comments
 
-    S_DASH,
     S_LINE_COMMENT,
-    S_START_MULT_COMMENT,
-    S_END_MULT_COMMENT,
+    S_LINE_COMMENT_CHECK,
+    S_DOUBLE_BRACKET,
+    S_MULT_COMMENT,
 
     S_IDENTIFIER
 
 } StateType;
 
-
-typedef enum {
-    KW_DO,
-    KW_ELSE,
-    KW_END,
-    KW_FUNCTION,
-    KW_GLOBAL,
-    KW_IF,
-    KW_INTEGER,
-    KW_LOCAL,
-    KW_NIL,
-    KW_NUMBER,
-    KW_REQUIRE,
-    KW_RETURN,
-    KW_STRING,
-    KW_THEN,
-    KW_WHILE
-    
-} KeyWord;
 
 
 /**
@@ -154,7 +138,6 @@ typedef struct {
     char *string; // TODO dynamicky string 
     int integer;
     double number;
-    KeyWord key_word; 
 
 } TokenAttributes;
 
@@ -167,7 +150,7 @@ typedef struct {
     TokenType type;
     TokenAttributes attribs;
 
-} TToken;
+} Token;
 
 /**
  * @brief Get the token object
@@ -175,20 +158,24 @@ typedef struct {
  * @return TToken* 
  */
 
-TToken *get_token();
+void get_token(Token *token);
 
 /**
  * @brief Appends char to string
  * 
+ * char *string = NULL;
+ * expand_string(&string,'a');
+ * 
  * @param string string where the c will be apended
  * @param c char to be appended
- * @return int 
+ * @return void
  */
 
 int expand_string(char **string, char c);
+void init_token(Token *token);
+void alphabet(Token *token, char c);
+int dash_minus(Token *token);
+void number(Token *token, char c);
+void string(Token *token);
 
-/**
- * @brief Token inicialization
- * 
- */
-int token_init(TToken *token)
+#endif 
