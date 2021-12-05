@@ -22,12 +22,6 @@ typedef enum
     NIL
 }DataType;
 
-
-typedef enum
-{
-    VAR,
-    FUN
-}SymbolType;
 typedef struct {
     /** counter of input parameters types*/
     int cnt_param_type;
@@ -47,8 +41,6 @@ typedef struct {
     char *key;
     /**data type*/
     DataType id;
-    /** funkc or variable*/
-    SymbolType sym_type;
     /** Left children*/
     struct TreeNode *left;
     /** Right children*/
@@ -77,7 +69,7 @@ void sym_stack_init(SymStack *stack);   // topindex = -1
  *
  * @param stack The address to which stack will be controlled
  *
- * @return
+ * @return true if stack is empty / false otherwise
  */
 bool sym_stack_is_empty( const SymStack *stack ); // ak je prazdny vrati true
 
@@ -85,34 +77,38 @@ bool sym_stack_is_empty( const SymStack *stack ); // ak je prazdny vrati true
  * @brief find fullness of stack
  *
  * @param stack The address to which stack will be controlled
+ *
+ * @return true if stack is full / false otherwise
  */
 bool sym_stack_is_full( const SymStack *stack ); // ak je plny vrati true
 
 /**
  * @brief controling emptiness emptiness of stack
  *
- * @param num_err
+ * @param stack The address to which stack will be controlled
+ *
+ * @return The address of root node on top of the stack
  */
 TreeNode *sym_stack_top( const SymStack *stack); // vrati ukazatel na koren
 
 /**
- * @brief Removing frame from stack
+ * @brief Removing framework from stack
  *
  * @param stack The address to which framework of stack will be removed
  */
 void sym_stack_pop( SymStack *stack );
 
 /**
- * @brief Push
+ * @brief Pushing new framework on stack
  *
- * @param stack
+ * @param stack The address to which stack will be pushed
  */
 void sym_stack_push( SymStack *stack, TreeNode *root );
 
 /**
  * @brief Delete stack
  *
- * @param stack
+ * @param stack The address to which stack will be removed
  */
 void sym_stack_dispose( SymStack *stack);
 
@@ -121,15 +117,17 @@ void sym_stack_dispose( SymStack *stack);
  *
  * @param tree The address for initialization
  */
-void bst_init(TreeNode **tree);  // koren = NULL
+void bst_init(TreeNode **tree);
 
 /**
  * @brief Search for node
  *
  * @param tree The address of root node
  * @param key wanted node name
+ *
+ * @return found element address if element was found / NULL otherwise
  */
-TreeNode *bst_search(TreeNode *tree, char *key);  //vrati true ked najde
+TreeNode *bst_search(TreeNode *tree, char *key);
 
 /**
  * @brief Search for node in stack
@@ -139,7 +137,7 @@ TreeNode *bst_search(TreeNode *tree, char *key);  //vrati true ked najde
  *
  * @return true node was found / false otherwise
  */
-TreeNode * bst_search_in_stack(SymStack *stack, char *key);  //vrati true ked najde
+TreeNode * bst_search_in_stack(SymStack *stack, char *key);
 
 /**
  * @brief Search for node in stack
@@ -158,8 +156,7 @@ bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id);  //vrati 
  * @param key node name
  * @param id node data type
  *
- * @return true node was inserted
- * @return false node was not inserted
+ * @return true node was inserted/ false otherwise
  *
  * @error 99 not compilation fault
  * @error 3 redefinition of variable / not definited variable
@@ -171,20 +168,19 @@ bool bst_insert(TreeNode **tree, char *key, DataType id); //bude insertne alebo 
  *
  * @param tree The address of root node
  * @param key node name
- * @param id node data type
  * @param cnt_param_type number of node input parameters
  * @param param_type node input parameters
  * @param return_type node return types
  * @param cnt_return_type number of node return types
  * @param is_defined node definitions
  *
- * @return true node was inserted
- * @return false node was not inserted
+ * @return true node was inserted / false otherwise
  *
  * @error 99 not compilation fault
- * @error 3 redefinition of variable / not definited variable
+ * @error 3 redefinition of variable / not definited variable / not matching number of params/
+ * not matching number of returns / not matching param types / not matching return types
  */
-bool bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type, DataType *param_type, int cnt_return_type, DataType *return_type, bool is_defined); //bude insertne alebo vrati chybu
+bool bst_insert_fun(TreeNode  **tree, char *key, int cnt_param_type, DataType *param_type, int cnt_return_type, DataType *return_type, bool is_defined); //bude insertne alebo vrati chybu
 
 /**
  * @brief Delete whole tree
@@ -193,5 +189,17 @@ bool bst_insert_fun(TreeNode  **tree, char *key, DataType id, int cnt_param_type
  *
  */
 void bst_dispose(TreeNode  **tree); // vymaze strom
+
+/**
+ * @brief compare two DataType arrays
+ *
+ * @param cnt1 number of first array elements
+ * @param arr1 the address of first array element
+ * @param cnt2 number of second array elements
+ * @param arr2 the address of second array element
+ *
+ * @return true number of array elements is same and all array elements are same / false otherwise
+ */
+bool sym_param_comp(int cnt1,  DataType *arr1, int cnt2, DataType *arr2);
 
 #endif //IFJ_SYMTABLE
