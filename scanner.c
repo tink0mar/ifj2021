@@ -2,12 +2,12 @@
  * @file scanner.c
  * @brief Scanner for ifj compiler
  * @author Adam Juliš
- * 
+ *
  * Project: IFJ compiler
  * Date: 24.11.2021
- */ 
+ */
 #include <stdlib.h>
-#include "scanner.h" 
+#include "scanner.h"
 #include "stdio.h"
 #include "string.h"
 #include "error.h"
@@ -25,25 +25,25 @@ int expand_string(char **string, char c){
     if (*string == NULL) {
         index = 0;
         ptr = realloc( *string , sizeof(char) * (2) );
-    } else {    
+    } else {
         index = (int)strlen(*string);
         ptr = realloc( *string , sizeof(char) * (index + 1) );
     }
-    
+
     if (ptr == NULL){
         return 1;
     } else {
-        
+
         ptr[index] = c;
-        ptr[index+1] = '\0'; 
-        
+        ptr[index+1] = '\0';
+
         *string = ptr;
         return 0;
     }
 }
 /**
- *@brief Init token to next use 
- * @param 
+ *@brief Init token to next use
+ * @param
  */
 void init_token(Token *token){
 
@@ -57,7 +57,7 @@ void init_token(Token *token){
 
 /**
  *  @brief Load the char/string to token
- *  @param  
+ *  @param
  */
 void alphabet(Token *token, char c){
     EXPAND_STR;
@@ -65,10 +65,10 @@ void alphabet(Token *token, char c){
     while (1){
 
         c = getchar();
-        
+
         if ( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || ( c >= 'a' && c <= 'z') || c == '_'){
             /**CHECK IT MORE*//*VYPRAZDNIT ATTRIBS OR NOT MORE*/
-            EXPAND_STR;       
+            EXPAND_STR;
         }
         else {
             ungetc(c, stdin);
@@ -100,7 +100,7 @@ int dash_minus(Token *token){
 
     while(1) {
         c = getchar();
-        
+
         switch (state){
 
             case S_MINUS_COMMENT:
@@ -185,13 +185,13 @@ void number(Token *token, char c) {
         if ( c > '0' && c<= '9')
             token->attribs.string = c;
     }*/
-    
+
     while (1) {
         c = getchar();
         switch(state){
-            
+
             case S_INTEGER:
-                
+
                 if ( c >= '0' && c <= '9'){
                     EXPAND_STR;
                     state = S_INTEGER;
@@ -216,7 +216,7 @@ void number(Token *token, char c) {
                     }
                     return;
                 }
-            
+
             case S_DOT:
                 if (c >= '0' && c <= '9'){
                     EXPAND_STR;
@@ -225,12 +225,12 @@ void number(Token *token, char c) {
                 } else {
                     set_error(LEXICAL_ERR);
                     return;
-                } 
-            
+                }
+
             case S_NUMBER_NO_EX:
-                
+
                 if (c >= '0' && c <= '9') {
-                    
+
                     EXPAND_STR;
                     state = S_NUMBER_NO_EX;
                     break;
@@ -249,7 +249,7 @@ void number(Token *token, char c) {
                     }
                     return;
                 }
-            
+
             case S_EXPONENT:
                 if (c == '+' || c == '-') {
                     EXPAND_STR;
@@ -263,7 +263,7 @@ void number(Token *token, char c) {
                     set_error(LEXICAL_ERR);
                     return;
                 }
-            
+
             case S_EX_PLUS_MINUS:
                 if (c >= '0' && c <= '9') {
                     EXPAND_STR;
@@ -273,7 +273,7 @@ void number(Token *token, char c) {
                     set_error(LEXICAL_ERR);
                     break;
                 }
-            
+
             case S_NUMBER:
                 if (c >= '0' && c <= '9') {
                     EXPAND_STR;
@@ -290,7 +290,7 @@ void number(Token *token, char c) {
                     }
                     return;
                 }
-        
+
         }
     }
 
@@ -304,11 +304,11 @@ void string(Token *token){
     while(1){
 
         c = getchar();
-        
+
         switch (state){
-            
+
             case S_STRING:
-                
+
                 if (c == '"'){
                     state = S_STRING_END;
                     break;
@@ -320,10 +320,10 @@ void string(Token *token){
                     state = S_STRING;
                     EXPAND_STR;
                     break;
-                } else { 
+                } else {
                     set_error(LEXICAL_ERR);
                     return;
-                } 
+                }
 
             case S_ESCAPE:
                 // spytat sa
@@ -347,7 +347,7 @@ void string(Token *token){
                     set_error(LEXICAL_ERR);
                     return;
                 }
-            
+
             case S_ESC_NUM_ZERO:
 
                 if (c >= '1' && c <= '9') {
@@ -383,7 +383,7 @@ void string(Token *token){
                     set_error(LEXICAL_ERR);
                     return;
                 }
-            
+
             case S_ESC_NUM_TWO:
                 if (c == '5') {
                     EXPAND_STR;
@@ -397,7 +397,7 @@ void string(Token *token){
                     set_error(LEXICAL_ERR);
                     return;
                 }
-            
+
             case S_ESC_NUM_TWO_FIVE:
                 if (c >= '0' && c  <= '5') {
                     EXPAND_STR;
@@ -416,12 +416,12 @@ void string(Token *token){
                 }else {
                     set_error(LEXICAL_ERR);
                     return;
-                } 
-            
+                }
+
             case S_STRING_END:
                 token->type = TT_STRING;
                 return;
-                
+
 
         }
     }
@@ -442,7 +442,7 @@ void get_token(Token *token) {
                             continue;
                         }else if (c == EOF) {
                             token->type = TT_EOF;    /*staci doufam*/
-                            return; 
+                            return;
                         } else if (c == '-') {                   /**HEY A MUZE BYT NECO JINEHO -- JAKO TREBA a-- ???????????*/
                             if (dash_minus(token)){
                                 return; /**if error or just '-', operator*/
@@ -464,28 +464,28 @@ void get_token(Token *token) {
                         else if (c == '/') {
                             c = getchar();
                             if (c == '/') token->type = TT_FLOOR_DIV;
-                            else {ungetc(c, stdin); token->type = TT_DIV;} 
+                            else {ungetc(c, stdin); token->type = TT_DIV;}
                             return;}
                         else if (c == '#') {token->type = TT_HASHTAG; return;}
                         else if (c == '>') {
                             c = getchar();
                             if (c == '=') token->type = TT_GREATER_OR_EQ;
-                            else {ungetc(c, stdin); token->type = TT_GREATER;} 
+                            else {ungetc(c, stdin); token->type = TT_GREATER;}
                             return;}
                         else if (c == '<') {
                             c = getchar();
                             if (c == '=') token->type = TT_LESS_OR_EQ;
-                            else {ungetc(c, stdin); token->type = TT_LESS;} 
+                            else {ungetc(c, stdin); token->type = TT_LESS;}
                             return;}
                         else if (c == '~') {
                             c = getchar();
-                            if (c == '=') token->type = TT_NOT_OR_EQ; /*chybka samotna right*/
-                            else {set_error(LEXICAL_ERR);} 
+                            if (c == '=') token->type = TT_NOT_EQ;
+                            else {set_error(LEXICAL_ERR);}
                             return;}
                         else if (c == '=') {
                             c = getchar();
                             if (c == '=') token->type = TT_EQ;
-                            else {ungetc(c, stdin); token->type = TT_ASSIGN;} 
+                            else {ungetc(c, stdin); token->type = TT_ASSIGN;}
                             return;}
                         else if (c == '(') {token->type = TT_LEFT_PAR; return;}
                         else if (c == ')') {token->type = TT_RIGHT_PAR; return;}
@@ -502,12 +502,7 @@ void get_token(Token *token) {
                         }
             default:
                 printf("sem se nemam co dostat jako\n");
-                return;   
-        }   
+                return;
+        }
     }
 }
-
-
-
-
-
