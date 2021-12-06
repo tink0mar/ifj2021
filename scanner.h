@@ -29,7 +29,7 @@ typedef enum {
     TT_LESS,                //  <
     TT_GREATER_OR_EQ,       //  >=
     TT_LESS_OR_EQ,          //  <=
-    TT_NOT_OR_EQ,           //  ~=
+    TT_NOT_EQ,           //  ~=
     TT_EQ,                  //  ==
     
     TT_ASSIGN,              //  =
@@ -58,7 +58,7 @@ typedef enum {
     TT_KW_RETURN,
     TT_KW_STRING,
     TT_KW_THEN,
-    TT_KW_WHILE
+    TT_KW_WHILE,
 
 } TokenType;
 
