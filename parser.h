@@ -21,6 +21,8 @@
         } \
     } else {READ = true;} \
 
+
+
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \
         set_error(ERR); \
@@ -33,12 +35,32 @@
         return false; \
     }\
 
+#define COPY_ID(DST, SRC) \
+    DST = malloc(sizeof(char) * (strlen(SRC) + 1) ); \
+    strcpy(DST, SRC); \
+
+
+#define NEW_SYMTABLE_FRAME \
+    TreeNode *frame;\
+    bst_init(&frame);\
+    sym_stack_push(&(p_data->stack), frame);\
+
+#define INSERT_VAR_TO_SYM(var_id, type) \
+    TreeNode *node = sym_stack_top(&(p_data->stack));\
+    if (bst_insert(&node, var_id, type) == false) {\
+        return false;\
+    }\ 
+
 typedef struct {
 
     Token *token;
     bool get_token;
     SymStack stack;
     TreeNode *global_frame;
+    
+
+    //char *code;
+    //char *main;
 
 } ParserData;
 
