@@ -159,7 +159,7 @@ void bst_dispose(TreeNode  **tree){
         {
             free((*tree)->fun_extension);
         }
-        //free((*tree)->key);
+        free((*tree)->key);
         free(*tree);
         (*tree) = NULL;
     }
