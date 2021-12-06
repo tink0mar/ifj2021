@@ -114,41 +114,30 @@ bool id_list(ParserData *p_data){
  * <ret_expr_list_others> -> eps
  * <ret_expr_list_others> -> , <expression> <ret_expr_list_others>
  */
-bool return_expr_list_others(ParserData *p_data, DataType **return_list, int *return_len){
+bool return_expr_list_others(ParserData *p_data, int *return_len, char *fun_id){
     Token *token = p_data->token;
     GET_TOKEN(token, p_data->get_token);
-    
+    DataType type;
+
     if (token->type == TT_COMMA){
         
         switch(token->type){
 
-            case TT_KW_END:
-            case TT_KW_ELSE:
-                return false;
-
             case TT_STRING:
-                enum_append(return_list, STR, return_len);
-                return return_expr_list_others(p_data,return_list, return_len);
-
             case TT_INTEGER:
-                enum_append(return_list, INT, return_len);
-                return return_expr_list_others(p_data,return_list, return_len);
-
-            case TT_NUMBER:
-                enum_append(return_list, NUM, return_len);
-                return return_expr_list_others(p_data,return_list, return_len);
-            
+            case TT_NUMBER:            
             case TT_IDENTIFIER:
             
-                enum_append(return_list, , return_len);
-                return return_expr_list_others(p_data,return_list, return_len);
+                return return_expr_list_others(p_data, return_len, fun_id);
                 // expression
-                return return_expr_list_others(p_data,return_list, return_len);
 
             default:
                 set_error(SYNTACTIC_ERR);
                 return false;
         }
+        
+
+
 
     } else {
         set_error(SYNTACTIC_ERR);
@@ -164,33 +153,43 @@ bool return_expr_list_others(ParserData *p_data, DataType **return_list, int *re
  * <ret_expr_list> -> eps
  * <ret_expr_list> -> <expression> <ret_expr_list_others>
  */
-bool return_expr_list(ParserData *p_data){
+bool return_expr_list(ParserData *p_data, char *fun_id){
     Token *token = p_data->token;
     GET_TOKEN(token, p_data->get_token);
     
     int return_len;
-    DataType *return_list;
 
     switch(token->type){
-        
-        case TT_KW_END:
-        case TT_KW_ELSE:
-            return true;
-            //TOKEN BACK
-            
-        case TT_STRING:
-        case TT_INTEGER:
-        case TT_NUMBER:
-        case TT_HASHTAG:
         case TT_IDENTIFIER:
-            // expression
-            return return_expr_list_others(p_data, &return_list ,&return_len);
+        case TT_KW_LOCAL:
+        case TT_KW_RETURN:
+        case TT_KW_IF:
+        case TT_KW_WHILE:
+        case TT_KW_ELSE:
+        case TT_KW_END:
+            // next token cant be read
+            p_data->get_token = false;
+            return true;
+        switch(token->type){
+            
+            case TT_KW_END:
+            case TT_KW_ELSE:
+                return true;
+                //TOKEN BACK
+                
+            case TT_STRING:
+            case TT_INTEGER:
+            case TT_NUMBER:
+            case TT_HASHTAG:
+            case TT_IDENTIFIER:
+                // expression
+                return return_expr_list_others(p_data, &return_list ,&return_len);
 
-        default:
-            set_error(SYNTACTIC_ERR);
-            return false;
+            default:
+                set_error(SYNTACTIC_ERR);
+                return false;
+        }
     }
-
 }
 
 
@@ -316,7 +315,7 @@ bool local(ParserData *p_data){
 /**
  * WHILE <expression> DO <block> END <block>
  */
-bool while_clause(ParserData *p_data){
+bool while_clause(ParserData *p_data, char* fun_id){
     Token *token = p_data->token;
 
     GET_TOKEN(token, p_data->get_token);
@@ -332,7 +331,7 @@ bool while_clause(ParserData *p_data){
 
     bool is_if_block = false;
     
-    if (block_fwe(p_data, is_if_block)) {
+    if (block_fwe(p_data, is_if_block, fun_id)) {
 
         //GENROVANIE LABELU NA END
         
@@ -349,7 +348,7 @@ bool while_clause(ParserData *p_data){
 /**
  * IF <expression> THEN <block_if> ELSE <block> <END> 
  */
-bool if_clause(ParserData *p_data) {
+bool if_clause(ParserData *p_data, char *fun_id) {
     Token *token = p_data->token;
     // IF was read
     // HUGO to potrebuje mat nacitane
@@ -368,7 +367,7 @@ bool if_clause(ParserData *p_data) {
 
     bool is_if_block = true; // we are in if block
     // BLOCK_IF
-    if ( block_fwe(p_data, is_if_block) == false){
+    if ( block_fwe(p_data, is_if_block, fun_id) == false){
         return false;
     } else {
         // == true, ELSE was read
@@ -376,7 +375,7 @@ bool if_clause(ParserData *p_data) {
         //GENEROVANIE DRUHEHO LABELU
 
         bool is_if_block = false; // we are in else block which ends with end
-        return block_fwe(p_data, is_if_block);
+        return block_fwe(p_data, is_if_block, fun_id);
     }
 }
 
@@ -412,13 +411,13 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
     switch (token->type){
 
         case TT_KW_LOCAL:
-            return local(p_data) && block_fwe(p_data, is_if_block);
+            return local(p_data) && block_fwe(p_data, is_if_block, fun_id);
 
         case TT_KW_IF:
-            return if_clause(p_data) && block_fwe(p_data, is_if_block);
+            return if_clause(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
 
         case TT_KW_WHILE:
-            return while_cyclus(p_data) && block_fwe(p_data, is_if_block);
+            return while_cyclus(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
 
         case TT_IDENTIFIER:
             char *id_name = copy_str(token->attribs.string);
@@ -427,16 +426,16 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
             if (token->type == TT_LEFT_PAR){
                 bool is_global = false; 
                 //FUNCTION CALL // TODO
-                return function_call(p_data, id_name, false) && block_fwe(p_data, is_if_block);
+                return function_call(p_data, id_name, false) && block_fwe(p_data, is_if_block, fun_id);
             } else {
                 p_data->get_token = false;
                 // TODO
-                return id_list(p_data) && block_fwe(p_data, is_if_block); 
+                return id_list(p_data) && block_fwe(p_data, is_if_block, fun_id); 
 
             }
 
         case TT_KW_RETURN:
-            return return_expr_list(p_data) && block_fwe(p_data, is_if_block);
+            return return_expr_list(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
 
         default:
             set_error(SYNTACTIC_ERR);
@@ -666,7 +665,7 @@ bool function_def(ParserData *p_data) {
             if ( return_types_list(p_data, &return_list, &return_len) ){
                 
                 // TODO porovnat datove type ak je uz deklarovana
-                bool flag =  bst_insert_fun( &(p_data->global_frame), fun_id, FUN, param_len, param_list, return_len, return_list, true);
+                bool flag =  bst_insert_fun( &(p_data->global_frame), fun_id, param_len, param_list, return_len, return_list, true);
 
                 if (flag == false)
                     return false;
@@ -929,7 +928,7 @@ bool global(ParserData *p_data)
             if (return_types_list_global(p_data, &return_list, &return_len)) {
                 bool is_defined = false;
                 
-                bool a = bst_insert_fun(&(p_data->global_frame), fun_id, FUN, param_len, param_list, return_len, return_list, false);
+                bool a = bst_insert_fun(&(p_data->global_frame), fun_id, param_len, param_list, return_len, return_list, false);
                 
                 //fprintf(stderr, "_%s_", (p_data->global_frame)->key);
                 
@@ -1030,10 +1029,9 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
         case TT_STRING:
         case TT_NUMBER:
         case TT_INTEGER:
-            
             //checks type
             CHECK_VARS(func->fun_extension->param_type[i], type, SEM_FUNC_PARAM_RET_ERR);
-            // generate parameter
+            // GENERATE parameter
             return function_param_list_others(p_data, global_call, i, func);
             break;
 
