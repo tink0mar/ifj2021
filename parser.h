@@ -2,10 +2,13 @@
  * @file parser.h
  * @brief Interface of syntactic analyser
  * @author Martin Kozák
- * 
+ *
  * Project: IFJ compiler
  * Date: 24.11.2021
- */ 
+ */
+
+#ifndef PARSER_H
+#define PARSER_H
 
 #include <stdbool.h>
 #include "symtable.h"
@@ -25,7 +28,7 @@
     if (dll_last_active(DLL) == true){\
         if (READ == true) {\
             get_token(TOKEN); \
-            if (dll_insert(DLL, TOKEN) == 1){\ 
+            if (dll_insert(DLL, TOKEN) == 1){\
                 return false;\
             }\
             \
@@ -64,7 +67,7 @@
     TreeNode *node = sym_stack_top(&(p_data->stack));\
     if (bst_insert(&node, var_id, type) == false) {\
         return false;\
-    }\ 
+    }\
 
 typedef struct {
 
@@ -72,7 +75,7 @@ typedef struct {
     bool get_token;
     SymStack stack;
     TreeNode *global_frame;
-    
+
 
     //char *code;
     //char *main;
@@ -84,32 +87,33 @@ bool program();
 
 /**
  * @brief Main program for parser
- * 
- * @return int 
+ *
+ * @return int
  */
 int syntactic_analyzator();
 
 /**
  * @brief Function frees all allocated resources
- * 
+ *
  */
 void free_resources(ParserData *p_data);
 
 /**
  * @brief Function allocates data for parser
- * 
- * @return ParserData * 
+ *
+ * @return ParserData *
  */
 ParserData *parser_init();
 
 /**
  * @brief Function for checking tokens
- * 
- * @param token_type Type of token 
+ *
+ * @param token_type Type of token
  * @param arr Array of token types
  * @param len Length of arr
- * @return true  
- * @return false 
+ * @return true
+ * @return false
  */
 bool check_tokens(TokenType token_type);
 
+#endif
