@@ -20,8 +20,23 @@
             return false;\
         } \
     } else {READ = true;} \
-
-
+/**
+#define GET_TOKEN(TOKEN, READ, DLL)\
+    if (dll_last_active(DLL) == true){\
+        if (READ == true) {\
+            get_token(TOKEN); \
+            if (dll_insert(DLL, TOKEN) == 1){\ 
+                return false;\
+            }\
+            \
+            if (num_error != 0) { \
+                return false;\
+            }\
+        } else {READ = true;}\
+    } else {\
+        dll_set_active_next(DLL);\
+    } \
+*/
 
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \

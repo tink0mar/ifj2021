@@ -17,6 +17,7 @@
 #include "symtable.h"
 #include "enum_list.h"
 #include "generator.c"
+#include "dll.h"
 
 // SYMTABLE OPRAAAV
 DataType find_data_type(TokenType type){
@@ -120,6 +121,93 @@ bool insert_var_to_stack(SymStack *pa_stack, char *id){
     }
 }  
 
+
+bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
+    Token *token = p_data->token;
+    GET_TOKEN(token, p_data->get_token)
+
+    switch (token->type){
+        case TT_IDENTIFIER:
+        case TT_KW_LOCAL:
+        case TT_KW_RETURN:
+        case TT_KW_IF:
+        case TT_KW_WHILE:
+        case TT_KW_ELSE:
+        case TT_KW_END:
+            p_data->get_token = false;
+            return true;
+        
+        case TT_COMMA:
+            GET_TOKEN(token, p_data->get_token)
+            switch(token->type){
+                case TT_STRING:
+                case TT_INTEGER:
+                case TT_NUMBER:
+                case TT_HASHTAG:
+                case TT_IDENTIFIER: 
+
+                    if (expression_list_others(p_data, pa_stack) == true){
+                        // EXPRESSION //semantic control
+                        TreeNode *var = sym_stack_top(pa_stack);
+                        sym_stack_pop(pa_stack);
+                        //
+                        //GENERATE POP
+                        gen_pop_var(var->key);
+                        return true;
+                    }else {
+                        return false;
+                    }
+
+                default:
+                    return false;
+            }
+    }
+}
+
+/**
+ * <expression_list_and_func>
+ */
+
+bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
+    Token *token = p_data->token;
+    GET_TOKEN(token, p_data->get_token)
+
+    if (token->type == TT_IDENTIFIER){
+        char *id_name = copy_str(token->attribs.string);
+        GET_TOKEN(token, p_data->get_token);
+
+        if (token->type == TT_LEFT_PAR){
+                bool is_global = false; 
+                //FUNCTION CALL /
+                if (function_call(p_data, id_name, false) == true){
+                    // TODO RETURNOVANIE
+                } else {
+                    return false;
+                }
+
+        } else {
+            dll_set_active_previous(&p_data->stack);
+            // TODO DOUBLE LINKED LIST 
+            if (expression_list_others(p_data, pa_stack) == true){
+                TreeNode *var = sym_stack_top(pa_stack);
+                sym_stack_pop(pa_stack);
+                //
+                //GENERATE POP
+                gen_pop_var(var->key);
+                return true;
+            }else {
+                return false;
+            }
+        }
+    } else {
+        set_error(SYNTACTIC_ERR);
+        return false;
+    }
+
+
+}
+
+
 /**
  * <id_list> = <expr_list_and_func> <block>
  *  
@@ -157,9 +245,7 @@ bool id_list(ParserData *p_data, char *id){
     }
     //IDS WAS LOADED
 
-    GET_TOKEN(token, p_data->get_token)
-
-    
+    return expression_list_and_func(p_data, &pa_stack);
 
 
 }
@@ -521,10 +607,10 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
 
             if (token->type == TT_LEFT_PAR){
                 bool is_global = false; 
-                //FUNCTION CALL // TODO
+                //FUNCTION CALL // TODO RETURNOVANIE
                 return function_call(p_data, id_name, false) && block_fwe(p_data, is_if_block, fun_id);
             } else {
-                
+                dll_set_active_previous(&p_data->stack);
                 // TODO DOUBLE LINKED LIST
                 return id_list(p_data, id_name) && block_fwe(p_data, is_if_block, fun_id); 
 
