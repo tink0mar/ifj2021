@@ -33,7 +33,7 @@ DataType find_data_type(TokenType type){
         case TT_KW_NIL:
 
         default:
-            return BAD;
+            return TT_KW_NIL;
     }
 }
 
@@ -50,7 +50,7 @@ DataType kw_find_data_type_kw(TokenType type){
         case TT_KW_NIL:
 
         default:
-            return BAD;
+            return TT_KW_NIL;
     }
 }
 
@@ -66,6 +66,7 @@ void free_resources(ParserData *p_data){
 
     // stack dispose
     sym_stack_dispose(&(p_data->stack));
+    dll_dispose(&p_data->dll_list);
     free(p_data);
 }
 
@@ -81,6 +82,7 @@ ParserData *parser_init()
         return NULL;
     }
 
+    //token
     p_data->token = malloc(sizeof(Token));
 
     if (p_data->token == NULL)
@@ -90,10 +92,18 @@ ParserData *parser_init()
     }
     p_data->token->attribs.string = NULL;
     
+    //sym_stack
     sym_stack_init(&p_data->stack);
 
+    //global frame
     bst_init(&(p_data->global_frame));
+    
+    //get token
     p_data->get_token = true;
+    
+    //dll list
+    dll_init(&p_data->dll_list);
+
     return p_data;
 }
 
@@ -121,6 +131,10 @@ bool insert_var_to_stack(SymStack *pa_stack, char *id){
     }
 }  
 
+/**
+ * <expression_list_others> -> eps
+ * <expression_list_others> -> , <expression> <expression_list_others> 
+ */
 
 bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
     Token *token = p_data->token;
