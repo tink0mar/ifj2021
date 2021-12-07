@@ -9,6 +9,7 @@
 
 #include "psa.h"
 
+// REMOVE
 char *PsaItemTypeStrings[] = {
     "#",
     "*",
@@ -29,6 +30,7 @@ char *PsaItemTypeStrings[] = {
     "I_NULL"
 };
 
+// REMOVE
 void print_psa_stack(PsaStack *stack){
 
     if( psa_stack_is_empty( stack ) ){
@@ -54,7 +56,7 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
 
     PsaStackItem item;
 
-    //
+    // Declare node value that will be used in switch's case - TT_IDENTIFIER
     TreeNode *node;
 
     switch ( token->type ) {
@@ -251,7 +253,7 @@ void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type){
 
 }
 
-void psa_reduce(PsaStack *stack){
+bool psa_reduce(PsaStack *stack){
 
     // Get the top item's type
     PsaItemType top_item_type = stack->content[ stack->top_index ].type;
@@ -275,13 +277,16 @@ void psa_reduce(PsaStack *stack){
             stack->content[ stack->top_index ].data_type = tmp_data_type;
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
+            return true;
+
         }else{
 
-            // TODO error
+            set_error( INTERNAL_ERR );
+            return false;
 
         }
 
-    }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER ){
+    }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
 
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
@@ -299,9 +304,12 @@ void psa_reduce(PsaStack *stack){
             stack->content[ stack->top_index ].data_type = tmp_data_type;
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
+            return true;
+
         }else{
 
-            // TODO error
+            set_error( INTERNAL_ERR );
+            return false;
 
         }
 
@@ -313,7 +321,7 @@ void psa_reduce(PsaStack *stack){
 
         psa_reduce_pop_and_update( stack, &top_item_type );
 
-        if( top_item_type == I_PLUS || top_item_type == I_MINUS || top_item_type == I_MUL || top_item_type == I_DIV ){
+        if( top_item_type == I_PLUS || top_item_type == I_MINUS || top_item_type == I_MUL ){
 
             psa_reduce_pop_and_update( stack, &top_item_type );
 
@@ -323,7 +331,7 @@ void psa_reduce(PsaStack *stack){
                 // ( it's the first expression in the expression but second expression on stack )
                 PsaItemType expr_1_data_type = stack->content[ stack->top_index ].data_type;
 
-                if( ( expr_1_data_type == NUM || expr_1_data_type == INT ) && ( expr_2_data_type == NUM || expr_2_data_type == INT ) ){
+                if( ( expr_1_data_type == NUM || expr_1_data_type == INT ) && ( expr_2_data_type == NUM || expr_2_data_type == INT ) ){
 
                     psa_reduce_pop_and_update( stack, &top_item_type );
 
@@ -334,60 +342,221 @@ void psa_reduce(PsaStack *stack){
                         stack->content[ stack->top_index ].terminal = false;
                         stack->content[ stack->top_index ].type = I_EXPR;
 
-                        if( expr_1_data_type == NUM || expr_2_data_type == NUM ){
+                        if( expr_1_data_type == INT && expr_2_data_type == INT ){
 
-                            stack->content[ stack->top_index ].data_type = NUM;
+                            stack->content[ stack->top_index ].data_type = INT;
 
                         }else{
 
-                            stack->content[ stack->top_index ].data_type = INT;
+                            stack->content[ stack->top_index ].data_type = NUM;
+
+                            if( expr_1_data_type == INT ){
+
+                                // TODO Pretypovať EXPR 1 na NUM
+
+                            }
+
+                            if( expr_2_data_type == INT ){
+
+                                // TODO Pretypovať EXPR 2 na NUM
+
+                            }
+
 
                         }
 
                         stack->content[ stack->top_index ].token_representation = empty_token;
 
+                        return true;
+
                     }else{
 
-                        // TODO error
+                        set_error( INTERNAL_ERR );
+                        return false;
 
                     }
 
                 }else{
 
-                    // TODO error
-                    fprintf(stderr, "ERROR SEMANTIKA 1\n", );
+                    set_error( SEM_T_UNCOM_EXPRESS_ERR );
+                    return false;
 
                 }
 
             }else{
 
-                // TODO error
-                fprintf(stderr, "ERROR SYNTAX 1\n");
+                set_error( SYNTACTIC_ERR );
+                return false;
+
+            }
+
+        }else if( top_item_type == I_DIV ){
+
+            // TODO Pretypovať EXPR 2 na NUM
+
+            psa_reduce_pop_and_update( stack, &top_item_type );
+
+            if( top_item_type == I_EXPR ){
+
+                // TODO Pretypovať EXPR 1 na NUM
+
+                psa_reduce_pop_and_update( stack, &top_item_type );
+
+                if( top_item_type == I_HANDLE ){
+
+                    // Change the < item to EXPR item
+                    stack->content[ stack->top_index ].terminal = false;
+                    stack->content[ stack->top_index ].type = I_EXPR;
+                    stack->content[ stack->top_index ].data_type = NUM;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    return true;
+
+                }else{
+
+                    set_error( SYNTACTIC_ERR );
+                    return false;
+
+                }
+
+            }else{
+
+                set_error( SYNTACTIC_ERR );
+                return false;
 
             }
 
         }else if( top_item_type == I_FLOOR_DIV ){
 
-            // Check the first operand
+            // TODO Pretypovať EXPR 2 na NUM
 
             psa_reduce_pop_and_update( stack, &top_item_type );
 
-            if( top_item_type != I_EXPR ){
+            if( top_item_type == I_EXPR ){
 
-                // TODO error
-                fprintf(stderr, "ERROR SYNTAX 2\n");
+                // TODO Pretypovať EXPR 1 na NUM
+
+                psa_reduce_pop_and_update( stack, &top_item_type );
+
+                if( top_item_type == I_HANDLE ){
+
+                    // Change the < item to EXPR item
+                    stack->content[ stack->top_index ].terminal = false;
+                    stack->content[ stack->top_index ].type = I_EXPR;
+                    stack->content[ stack->top_index ].data_type = NUM;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    return true;
+
+                }else{
+
+                    set_error( SYNTACTIC_ERR );
+                    return false;
+
+                }
+
+            }else{
+
+                set_error( SYNTACTIC_ERR );
+                return false;
 
             }
 
         }else if( top_item_type == I_CONCAT ){
 
-            // TODO
-            // Operandy musia byt string
+            if( expr_2_data_type == STR ){
+
+                psa_reduce_pop_and_update( stack, &top_item_type);
+
+                if( top_item_type == I_EXPR ){
+
+                    // Save the first expression's type
+                    // ( it's the first expression in the expression but second expression on stack )
+                    PsaItemType expr_1_data_type = stack->content[ stack->top_index ].data_type;
+
+                    // Check the first expression's data type ( second expression on stack )
+                    if( expr_1_data_type == STR ){
+
+                        psa_reduce_pop_and_update( stack, &top_item_type );
+
+                        if( top_item_type == I_HANDLE ){
+
+                            // Change the < item to EXPR item
+                            stack->content[ stack->top_index ].terminal = false;
+                            stack->content[ stack->top_index ].type = I_EXPR;
+                            stack->content[ stack->top_index ].data_type = STR;
+                            stack->content[ stack->top_index ].token_representation = empty_token;
+
+                            return true;
+
+                        }else{
+
+                            set_error( SYNTACTIC_ERR );
+                            return false;
+
+                        }
+
+                    }else{
+
+                        // E .. e
+                        // E is not a string
+                        set_error( SEM_T_UNCOM_EXPRESS_ERR );
+                        return false;
+
+                    }
+
+                }else{
+
+                    set_error( SYNTACTIC_ERR );
+                    return false;
+
+                }
+
+            }else{
+
+                // e .. E
+                // E is not a string
+                set_error( SEM_T_UNCOM_EXPRESS_ERR );
+                return false;
+
+            }
+
+        }else if( top_item_type == I_HASHTAG ){
+
+            if( expr_2_data_type == STR ){
+
+                psa_reduce_pop_and_update( stack, &top_item_type );
+
+                if( top_item_type == I_HANDLE ){
+
+                    // Change the < item to EXPR item
+                    stack->content[ stack->top_index ].terminal = false;
+                    stack->content[ stack->top_index ].type = I_EXPR;
+                    stack->content[ stack->top_index ].data_type = INT;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    return true;
+
+                }else{
+
+                    set_error( SYNTACTIC_ERR );
+                    return false;
+
+                }
+
+            }else{
+
+                // # E
+                // E is not a string
+                set_error( SEM_T_UNCOM_EXPRESS_ERR );
+                return false;
+
+            }
 
         }else{
 
-            // TODO error
-            fprintf(stderr, "ERROR SYNTAX 3\n");
+            set_error( SYNTACTIC_ERR );
+            return false;
 
         }
 
@@ -397,55 +566,57 @@ void psa_reduce(PsaStack *stack){
 
         if( top_item_type == I_EXPR ){
 
+            // Save data_type of the expression
+            DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
+
             psa_reduce_pop_and_update( stack, &top_item_type );
 
-            if( top_item_type != I_LEFT_PAR ){
+            if( top_item_type == I_LEFT_PAR ){
 
-                // TODO error
-                fprintf(stderr, "ERROR SYNTAX 4\n");
+                psa_reduce_pop_and_update( stack, &top_item_type );
+
+                // If expresion is bordered by < ("HANDLE" mark)
+                if( top_item_type == I_HANDLE ){
+
+                    // Change the < item with E
+                    stack->content[ stack->top_index ].terminal = false;
+                    stack->content[ stack->top_index ].type = I_EXPR;
+                    stack->content[ stack->top_index ].data_type = tmp_data_type;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    return true;
+
+                }else{
+
+                    set_error( INTERNAL_ERR );
+                    return false;
+
+                }
+
+            }else{
+
+                set_error( SYNTACTIC_ERR );
+                return false;
 
             }
 
         }else{
 
-            // TODO error
-            fprintf(stderr, "ERROR SYNTAX 5\n");
+            set_error( SYNTACTIC_ERR );
+            return false;
 
         }
 
-    }else if( top_item_type == I_HASHTAG ){
-
-
-
     }else{
 
-        fprintf(stderr, "ERROR - %s\n", PsaItemTypeStrings[top_item_type]);
-
-        // TODO error
-        fprintf(stderr, "ERROR SYNTAX 6\n");
-
-    }
-
-    psa_reduce_pop_and_update( stack, &top_item_type );
-
-    // If expresion is bordered by < ("HANDLE" mark)
-    if( top_item_type == I_HANDLE ){
-
-        // Change the < item with E
-        stack->content[ stack->top_index ].terminal = false;
-        stack->content[ stack->top_index ].type = I_EXPR;
-        stack->content[ stack->top_index ].data_type = NOTHING;
-        // stack->content[ stack->top_index ].token_representation = "";
-
-    }else{
-
-        // TODO error
+        set_error( INTERNAL_ERR );
+        return false;
 
     }
 
 }
 
-bool psa(ParserData *parser_data ){
+DataType psa(ParserData *parser_data){
 
     // NOTE dynamicka kontrola delenia nulou
 
@@ -460,17 +631,17 @@ bool psa(ParserData *parser_data ){
     // Create table for the psa
     char table[TABLE_SIZE][TABLE_SIZE] = {
 
-        {'?','>','>','>','>','>','>','<','E','E','<','<','>','>'},
-        {'<','>','>','>','>','>','>','<','<','<','E','<','>','>'},
-        {'<','>','>','>','>','>','>','<','<','<','E','<','>','>'},
-        {'<','>','>','>','>','>','>','<','<','E','E','<','>','>'},
-        {'<','<','<','<','>','>','>','<','<','<','E','<','>','>'},
-        {'<','<','<','<','>','>','>','<','<','<','E','<','>','>'},
-        {'<','<','<','<','<','<','<','<','E','E','<','<','>','>'},
+        {'?','>','>','>','>','>','>','<','<','<','<','<','>','>'},
+        {'<','>','>','>','>','>','>','<','<','<','<','<','>','>'},
+        {'<','>','>','>','>','>','>','<','<','<','<','<','>','>'},
+        {'<','>','>','>','>','>','>','<','<','<','<','<','>','>'},
+        {'<','<','<','<','>','>','>','<','<','<','<','<','>','>'},
+        {'<','<','<','<','>','>','>','<','<','<','<','<','>','>'},
+        {'<','<','<','<','<','<','<','<','<','<','<','<','>','>'},
         {'E','>','>','>','>','>','>','E','E','E','E','E','>','>'},
-        {'E','>','>','>','>','>','E','E','E','E','E','E','>','>'},
-        {'E','>','>','E','>','>','E','E','E','E','E','E','>','>'},
-        {'E','E','E','E','E','E','>','E','E','E','E','E','>','>'},
+        {'E','>','>','>','>','>','>','E','E','E','E','E','>','>'},
+        {'E','>','>','>','>','>','>','E','E','E','E','E','>','>'},
+        {'E','>','>','>','>','>','>','E','E','E','E','E','>','>'},
         {'<','<','<','<','<','<','<','<','<','<','<','<','=','E'},
         {'E','>','>','>','>','>','>','E','E','E','E','E','>','>'},
         {'<','<','<','<','<','<','<','<','<','<','<','<','E','E'}
@@ -485,42 +656,41 @@ bool psa(ParserData *parser_data ){
 
     do {
 
-        // REMOVE
-        // fprintf(stderr, "TOP_TERMINAL = %s ENTRY_TOKEN = %s\n", top_terminal->item_content, entry_item.item_content);
-        // fprintf(stderr, "TOP_TERMINAL_TABLE_INDEX = %i ENTRY_TOKEN_TABLE_INDEX = %i\n", top_terminal->table_index, entry_item.table_index);
-
         print_psa_stack( stack );
-
 
         if( table[top_terminal->type][entry_item.type] == '>' ){
 
+            fprintf(stderr, "REDUCTION - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
+
             // REDUCTION
-            psa_reduce( stack );
+            if( psa_reduce( stack ) == false ){
+                break;
+            }
 
         }else if( table[top_terminal->type][entry_item.type] == '<' ){
 
-            // SHIFT REDUCTION
+            // printf("SHIFT - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
+
+            // SHIFT
             psa_modify_top_terminal( stack );
             psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack );
 
         }else if( table[top_terminal->type][entry_item.type] == '=' ){
+
+            // printf("PUSH - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
 
             // PUSH and NEW TOKEN
             psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack );
 
         }else if( table[top_terminal->type][entry_item.type] == 'E' ){
 
-            // TODO error
-            // psa_error();
-            fprintf(stderr, "ERROR 1\n");
-            return false;
+            set_error( SYNTACTIC_ERR );
+            break;
 
         }else{
 
-            // TODO psa program error
-            // psa_program_error();
-            fprintf(stderr, "ERROR 2\n");
-            return false;
+            set_error( INTERNAL_ERR );
+            break;
 
         }
 
@@ -531,7 +701,26 @@ bool psa(ParserData *parser_data ){
 
     print_psa_stack( stack );
 
-    return true;
+    // If for some reason the stack is NULL
+    if( stack == NULL ){
+
+        set_error( INTERNAL_ERR );
+        return NOTHING;
+
+    }else{
+
+        // If fore some reason the stack->content is NULL
+        if( stack->content == NULL ){
+
+            set_error( INTERNAL_ERR );
+            return NOTHING;
+
+        }
+
+        // Return DataType of the final expression to parser.c
+        return stack->content[ stack->top_index ].data_type;
+
+    }
 
 }
 
@@ -555,12 +744,19 @@ int main(){
     // Load token
     get_token( token );
 
-    if( psa(parser_data) == true ){
-        printf("WORKS!\n");
-    }else{
-        printf("MISTAKE!\n");
-    }
+    DataType data_type_returned_from_psa = psa( parser_data );
 
-    // printf("%s\n", TokenTypeStrings[token->type]);
+    if( num_error != 0 || data_type_returned_from_psa >= NOTHING ){
+
+        printf("MISTAKE!\n");
+        error_mess( num_error );
+        printf("\nRETURNED DATA TYPE: %d\n", data_type_returned_from_psa);
+
+    }else{
+
+        printf("WORKS!\n");
+        printf("RETURNED DATA TYPE: %d\n", data_type_returned_from_psa);
+
+    }
 
 }
