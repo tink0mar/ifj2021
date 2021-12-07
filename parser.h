@@ -64,7 +64,7 @@
     TreeNode *node = sym_stack_top(&(p_data->stack));\
     if (bst_insert(&node, var_id, type) == false) {\
         return false;\
-    }\ 
+    }\
 
 typedef struct {
 
