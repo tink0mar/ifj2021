@@ -65,9 +65,12 @@ void dll_set_active_last( DLList *list ) {
     }
 }
 bool dll_is_active_last( DLList *list ) {
-    if(list->activeElement == list->lastElement)
+    if(list->firstElement)
     {
-        return true;
+    if(list->activeElement == list->lastElement)
+        {
+            return true;
+        }
     }
     return false;
 }
