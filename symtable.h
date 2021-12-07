@@ -19,7 +19,8 @@ typedef enum
     NUM,
     INT,
     STR,
-    NIL
+    NIL,
+    NOTHING
 }DataType;
 
 typedef struct {
