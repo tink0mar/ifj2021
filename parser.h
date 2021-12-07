@@ -7,7 +7,7 @@
  * Date: 24.11.2021
  */
 
-#ifndej PARSER_H
+#ifndef PARSER_H
 #define PARSER_H
 
 #include <stdbool.h>
@@ -116,4 +116,3 @@ ParserData *parser_init();
  */
 bool check_tokens(TokenType token_type);
 
-#endif
