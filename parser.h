@@ -116,3 +116,4 @@ ParserData *parser_init();
  */
 bool check_tokens(TokenType token_type);
 
+#endif
