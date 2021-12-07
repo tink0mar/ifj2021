@@ -762,19 +762,3 @@ bool gen_while_end(int top_index){
     label_index[top_index]++;
 }
 
-
-int main(){
-    Token token;
-
-    token.attribs.string = "aa";
-    token.type = TT_STRING;
-
-    //fprintf(stderr, "%d", TT_STRING);
-    
-    gen_main();
-    
-    print_code();
-    char *a = NULL;
-
-    
-}
