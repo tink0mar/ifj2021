@@ -64,6 +64,13 @@ void dll_set_active_last( DLList *list ) {
         list->activeElement = list->lastElement;
     }
 }
+bool dll_is_active_last( DLList *list ) {
+    if(list->activeElement == list->lastElement)
+    {
+        return true;
+    }
+    return false;
+}
 void dll_dispose( DLList *list ) {
     DLLElementPtr elemPtr;
     elemPtr = list->firstElement;
