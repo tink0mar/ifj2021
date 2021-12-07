@@ -9,8 +9,8 @@
 
 #include <stdbool.h>
 
-#ifndef IFJ_SYMTABLE_H
-#define IFJ_SYMTABLE_H
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
 
 #define MAX_STACK 20
 
