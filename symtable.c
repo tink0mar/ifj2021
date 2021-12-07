@@ -9,7 +9,6 @@
 #include "symtable.h"
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include "error.h"
 
@@ -37,7 +36,7 @@ TreeNode *bst_search(TreeNode  *tree, char *key)
 TreeNode *bst_search_in_stack(SymStack *stack, char *key){
     int a = stack->topIndex;
     TreeNode *k;
-    while(stack->topIndex != 0)
+    while(stack->topIndex != -1)
     {
        TreeNode *tree = sym_stack_top(stack);
        k = bst_search(tree, key);
@@ -51,6 +50,23 @@ TreeNode *bst_search_in_stack(SymStack *stack, char *key){
     stack->topIndex = a;
     return NULL;
 
+}
+
+int bst_search_in_stack_gen(SymStack *stack, char *key) {
+    int a = stack->topIndex;
+    TreeNode *k;
+    while (stack->topIndex != -1) {
+        TreeNode *tree = sym_stack_top(stack);
+        k = bst_search(tree, key);
+        if (k != NULL) {
+            int tmp = stack->topIndex;
+            stack->topIndex = a;
+            return tmp;
+        }
+        stack->topIndex--;
+    }
+    stack->topIndex = a;
+    return -2;
 }
 
 bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id){

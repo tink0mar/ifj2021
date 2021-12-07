@@ -48,6 +48,12 @@ int expand_string(char **string, char c){
 void init_token(Token *token){
 
     if (token->attribs.string != NULL){
+        
+        if (token->attribs.string == ""){
+            token->attribs.string = NULL;
+            return;
+        }
+
         int size = strlen(token->attribs.string);
         free(token->attribs.string);
         token->attribs.string = NULL;
@@ -255,7 +261,7 @@ void number(Token *token, char c) {
                     EXPAND_STR;
                     state = S_EX_PLUS_MINUS;
                     break;
-                } else if ( c >= '0' && c <= '9') {
+                } else if ( c >= '0' && c <= '9') {printf("first:%d second:%f",token->attribs.integer, token->attribs.number);
                     EXPAND_STR;
                     state = S_NUMBER;
                     break;
@@ -310,6 +316,9 @@ void string(Token *token){
             case S_STRING:
 
                 if (c == '"'){
+                    if (token->attribs.string == NULL){
+                        token->attribs.string = "";
+                    }
                     state = S_STRING_END;
                     break;
                 } else if (c == '\\'){
@@ -419,6 +428,7 @@ void string(Token *token){
                 }
 
             case S_STRING_END:
+                ungetc(c, stdin);
                 token->type = TT_STRING;
                 return;
 

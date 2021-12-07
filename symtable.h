@@ -150,6 +150,16 @@ TreeNode * bst_search_in_stack(SymStack *stack, char *key);
 bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id);  //vrati true ked najde
 
 /**
+ * @brief Search node in stack for generator
+ *
+ * @param stack  The address of root node
+ * @param key wanted node name
+ *
+ * @return stack topindex when node was found / -2 otherwise
+ */
+int bst_search_in_stack_gen(SymStack *stack, char *key);
+
+/**
  * @brief Insert a node
  *
  * @param tree The address of root node

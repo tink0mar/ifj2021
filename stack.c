@@ -42,7 +42,7 @@ TreeNode *sym_stack_top( const SymStack *stack){
     }
     return stack->array[stack->topIndex];
 }
-void stack_pop( SymStack *stack ){
+void sym_stack_pop( SymStack *stack ){
     if(!sym_stack_is_empty(stack))
     {
         stack->topIndex -= 1;
