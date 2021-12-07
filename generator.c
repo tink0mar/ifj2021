@@ -59,13 +59,7 @@
         set_error(99); \
         return false;\
     }\
-
-typedef enum {
-    T_LF,
-    T_GF,
-    T_TF
-} FrameType;
-
+    
 char id_frame[3][3] = { "LF@", "GF@", "TF@"};
 
 char *code = NULL;
@@ -180,7 +174,7 @@ char *get_frame_term_str(Token *token, FrameType frame){
 bool gen_main(){
     M_PRTC_N();
     M_PRTC_N();
-    M_PRTC_N("LABEL main");
+    M_PRTC_N("LABEL $main");
 }
 
 // generate header of code
@@ -194,7 +188,7 @@ bool gen_header(){
     PRTC_N("DEFVAR GF@\%tmp1")
     PRTC_N("DEFVAR GF@\%tmp2")
     PRTC_N("DEFVAR GF@\%tmp3")
-    PRTC_N("JUMP main");
+    PRTC_N("JUMP &main");
     PRTC_N()
     gen_reads();
     gen_readn();
@@ -268,7 +262,7 @@ bool gen_readn(){
 bool gen_write(Token *token){
 
     PRTC("WRITE ")
-    char *ptr = get_term_str(token, T_LF);
+    char *ptr = get_frame_term_str(token, T_LF);
 
 }
 
@@ -304,7 +298,7 @@ bool gen_chr(){
 
 // generate pushs for psa
 bool gen_push_E(Token token){
-    char *term = gen_frame_term_str(token);
+    char *term = get_frame_term_str(&token, T_LF);
 
     PRTC("PUSHS ");
     PRTC(term)
@@ -425,8 +419,12 @@ bool gen_nil_nil(){
 /** FUNCTION CALL **/
 
 //generate frame for function call
-bool gen_frame(){
-    PRTC_N("CREATEFRAME")
+bool gen_frame_global(bool global){
+    if (global){
+        M_PRTC_N("CREATEFRAME")
+    } else {
+        PRTC_N("CREATEFRAME")
+    }
     return true;
 }
 
@@ -541,7 +539,7 @@ bool gen_return(){
 bool gen_var(char *id, int top_index){
     PRTC("DEFVAR LF@")
     PRTC(id)
-    PRTC(top_index)
+    PRTC_INT(top_index)
     PRTC_N()
     return true;
 }
@@ -549,7 +547,7 @@ bool gen_var(char *id, int top_index){
 bool gen_pop_var(char *id, int top_index){
     PRTC("POPS ")
     PRTC(id)
-    PRTC(top_index)
+    PRTC_INT(top_index)
     PRTC_N()
     return true;
 }
@@ -762,3 +760,19 @@ bool gen_while_end(int top_index){
     label_index[top_index]++;
 }
 
+
+int main(){
+    Token token;
+
+    token.attribs.string = "aa";
+    token.type = TT_STRING;
+
+    //fprintf(stderr, "%d", TT_STRING);
+    gen_header();
+    gen_main();
+    
+    print_code();
+    char *a = NULL;
+
+    
+}
