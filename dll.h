@@ -1,7 +1,7 @@
-#ifndef LINKED_LIST_DLL_H
-#define LINKED_LIST_DLL_H
+#ifndef DLL_H
+#define DLL_H
 #include "scanner.h"
-
+#include <stdbool.h>
 typedef struct DLLElement {
     /** Token. */
     Token *token;
@@ -32,7 +32,7 @@ void dll_init( DLList *list );
  *
  * @param list The list address for insert
  * @param token Data for inserted element
- * 
+ *
  * @return 0 node was inserted / 1 malloc error
  */
 int dll_insert( DLList *list, Token *token );
@@ -59,9 +59,18 @@ void dll_set_active_previous( DLList *list );
 void dll_set_active_last( DLList *list );
 
 /**
+ * @brief find out if last element is active
+ *
+ * @param list The list address
+ *
+ * @return true if last element is active / false otherwise
+ */
+bool dll_is_active_last( DLList *list );
+
+/**
  * @brief delete all elements
  *
  * @param list The list address
  */
 void dll_dispose( DLList *list );
-#endif //LINKED_LIST_DLL_H
+#endif //DLL_H
