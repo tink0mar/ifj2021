@@ -259,7 +259,7 @@ bool psa_reduce(PsaStack *stack){
     PsaItemType top_item_type = stack->content[ stack->top_index ].type;
 
     // <id
-    if( top_item_type == I_ID ){
+    if( top_item_type == I_ID || top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
 
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
@@ -277,32 +277,8 @@ bool psa_reduce(PsaStack *stack){
             stack->content[ stack->top_index ].data_type = tmp_data_type;
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
-            return true;
-
-        }else{
-
-            set_error( INTERNAL_ERR );
-            return false;
-
-        }
-
-    }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
-
-        // Save the id's ( top item's ) data_type and token
-        DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
-        Token tmp_token = stack->content[ stack->top_index ].token_representation;
-
-        // Pop and update top_item_type
-        psa_reduce_pop_and_update( stack, &top_item_type );
-
-        // If expresion is bordered by < ("HANDLE" mark)
-        if( top_item_type == I_HANDLE ){
-
-            // Change the < item to EXPR item
-            stack->content[ stack->top_index ].terminal = false;
-            stack->content[ stack->top_index ].type = I_EXPR;
-            stack->content[ stack->top_index ].data_type = tmp_data_type;
-            stack->content[ stack->top_index ].token_representation = tmp_token;
+            // Generate output code
+            gen_push_E( tmp_token );
 
             return true;
 
@@ -428,25 +404,45 @@ bool psa_reduce(PsaStack *stack){
 
         }else if( top_item_type == I_FLOOR_DIV ){
 
-            // TODO Pretypovať EXPR 2 na NUM
+            // TODO pretypovať oba operandy na NUM
 
-            psa_reduce_pop_and_update( stack, &top_item_type );
-
-            if( top_item_type == I_EXPR ){
-
-                // TODO Pretypovať EXPR 1 na NUM
+            if( expr_2_data_type == INT ){
 
                 psa_reduce_pop_and_update( stack, &top_item_type );
 
-                if( top_item_type == I_HANDLE ){
+                if( top_item_type == I_EXPR ){
 
-                    // Change the < item to EXPR item
-                    stack->content[ stack->top_index ].terminal = false;
-                    stack->content[ stack->top_index ].type = I_EXPR;
-                    stack->content[ stack->top_index ].data_type = NUM;
-                    stack->content[ stack->top_index ].token_representation = empty_token;
+                    DataType expr_1_data_type = stack->content[ stack->top_index ].data_type;
 
-                    return true;
+                    if( expr_1_data_type == INT ){
+
+                        psa_reduce_pop_and_update( stack, &top_item_type );
+
+                        if( top_item_type == I_HANDLE ){
+
+                            // Change the < item to EXPR item
+                            stack->content[ stack->top_index ].terminal = false;
+                            stack->content[ stack->top_index ].type = I_EXPR;
+                            stack->content[ stack->top_index ].data_type = NUM;
+                            stack->content[ stack->top_index ].token_representation = empty_token;
+
+                            return true;
+
+                        }else{
+
+                            set_error( SYNTACTIC_ERR );
+                            return false;
+
+                        }
+
+                    }else{
+
+                        // e // E
+                        // E is not integer
+                        set_error( SEM_T_UNCOM_EXPRESS_ERR );
+                        return false;
+
+                    }
 
                 }else{
 
@@ -457,7 +453,9 @@ bool psa_reduce(PsaStack *stack){
 
             }else{
 
-                set_error( SYNTACTIC_ERR );
+                // E // e
+                // E is not integer
+                set_error( SEM_T_UNCOM_EXPRESS_ERR );
                 return false;
 
             }
@@ -669,7 +667,7 @@ DataType psa(ParserData *parser_data){
 
         }else if( table[top_terminal->type][entry_item.type] == '<' ){
 
-            // printf("SHIFT - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
+            printf("SHIFT - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
 
             // SHIFT
             psa_modify_top_terminal( stack );

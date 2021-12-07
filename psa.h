@@ -13,6 +13,7 @@
 #include "scanner.h"
 #include "symtable.h"
 #include "parser.h"
+#include "generator.h"
 #include <stdio.h> // REMOVE
 #include <stdlib.h>
 #include <stdbool.h>
