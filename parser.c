@@ -16,6 +16,7 @@
 #include "scanner.h"
 #include "symtable.h"
 #include "enum_list.h"
+#include "generator.c"
 
 // SYMTABLE OPRAAAV
 DataType find_data_type(TokenType type){
@@ -119,12 +120,6 @@ bool insert_var_to_stack(SymStack *pa_stack, char *id){
     }
 }  
 
-bool aa(){
-
-    return false;
-}
-
-
 /**
  * <id_list> = <expr_list_and_func> <block>
  *  
@@ -160,10 +155,11 @@ bool id_list(ParserData *p_data, char *id){
             return false;
         }
     }
-
     //IDS WAS LOADED
 
+    GET_TOKEN(token, p_data->get_token)
 
+    
 
 
 }
@@ -191,6 +187,8 @@ bool return_expr_list_others(ParserData *p_data, TreeNode *func, int *return_len
                 set_error(SEM_FUNC_PARAM_RET_ERR);
                 return false;
             }
+            //GENERATE
+            gen_move_to_return(return_len);
             p_data->get_token = false;
             return true;
 
@@ -204,6 +202,8 @@ bool return_expr_list_others(ParserData *p_data, TreeNode *func, int *return_len
                     // expression 
 
                     // GENERATE RETURN VARIABLE
+                    gen_move_to_return(return_len);
+
                     if ( return_expr_list_others(p_data, func, &return_len, fun_id) == true){
 
                         return true;
@@ -248,6 +248,7 @@ bool return_expr_list(ParserData *p_data, char *fun_id){
         case TT_KW_ELSE:
         case TT_KW_END:
             //GENERATE EMPTY RETURN
+            gen_return();
             // next token cant be read
             p_data->get_token = false;
             return true;
@@ -267,8 +268,9 @@ bool return_expr_list(ParserData *p_data, char *fun_id){
     }
 
     if ( return_expr_list_others(p_data, func ,&return_len, fun_id) == true){
-
+        
         //GENERATE return label
+        gen_return();
 
         return true;
     } else {
@@ -289,6 +291,8 @@ bool local_expr_2(ParserData *p_data, char *var_id){
         case TT_NUMBER:
         case TT_HASHTAG:
             // expression
+            //GENERATE POP
+            gen_pop_var(var_id);
 
         case TT_KW_NIL:
             // idk
@@ -308,7 +312,8 @@ bool local_expr_2(ParserData *p_data, char *var_id){
             } else {
                 //expression
                 // LINKED LIST
-                //genrovanie kodu
+                //GENERATE POP
+                gen_pop_var(var_id);
                 return true;
 
             }
@@ -340,6 +345,7 @@ bool local_expr(ParserData *p_data, char *var_id){
         case TT_KW_END:
         
             //GENERATE VARIABLE
+            gen_var(var_id);
 
             // next token cant be read
             p_data->get_token = false;
@@ -407,6 +413,7 @@ bool while_clause(ParserData *p_data, char* fun_id){
 
     GET_TOKEN(token, p_data->get_token);
     
+    //GENEROVANIE LABELU
     /*
     if ( psa(token) == false ) {  //GENEROVANIE
         return false;
@@ -485,6 +492,7 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
 
     // novy ramec
     NEW_SYMTABLE_FRAME
+    gen_new_block_label(p_data->stack.topIndex);
 
     if (token->type == TT_KW_END && is_if_block == false) {
         sym_stack_pop(&p_data->stack);
@@ -538,11 +546,12 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
  * <param_list_others> -> eps
  * <param_list_others> -> , ID : <data_type> <param_list_others>
  */
-bool param_list_others(ParserData *p_data, DataType **param_list, int *param_len) {
+bool param_list_others(ParserData *p_data, DataType **param_list, int *param_len, int *i) {
     Token *token = p_data->token;
     GET_TOKEN(token, p_data->get_token);
     char *id;
     DataType type = find_data_type(token->type); 
+    i = i + 1;
 
     switch(token->type) {
         //eps
@@ -599,6 +608,7 @@ bool param_list_func(ParserData *p_data, DataType **param_list, int *param_len){
     char *id;
     GET_TOKEN(token, p_data->get_token);
     DataType type = find_data_type(token->type);
+    int i = 0;
 
     switch(token->type){
         //eps
@@ -624,7 +634,7 @@ bool param_list_func(ParserData *p_data, DataType **param_list, int *param_len){
                     INSERT_VAR_TO_SYM(id, type);
                     enum_append(param_list, type, param_len);
                     //GENERATE PARAMETER
-                    return param_list_others(p_data, param_list, param_len);
+                    return param_list_others(p_data, param_list, param_len, &i);
 
                 case TT_KW_NIL:
                 default:
@@ -748,6 +758,7 @@ bool function_def(ParserData *p_data) {
         //new sytable frame
         NEW_SYMTABLE_FRAME
         // generovanie LABELU
+        gen_fun_label(fun_id);
 
         //check variable if LEFT PARENTHISE
         GET_TOKEN(token, p_data->get_token);
@@ -768,7 +779,9 @@ bool function_def(ParserData *p_data) {
                 /* <BLOCK> */
                 bool is_if_block = false;
                 if (block_fwe(p_data, is_if_block, fun_id) == true) {
-                    // bol nacitany end funkcie 
+                    // END was read GENERATE
+                    gen_popframe();
+                    gen_return();
 
                     return true;
                 } else {
@@ -1055,6 +1068,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
                 //checks type
                 CHECK_VARS(func->fun_extension->param_type[*i], type, SEM_FUNC_PARAM_RET_ERR);
                 // generate parameter
+                gen_fun_par_to_be_sent(token, (i + 1) , global_call);
                 return function_param_list_others(p_data, global_call, i, func);
                 break;
 
@@ -1071,6 +1085,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
                 CHECK_VARS(func->fun_extension->param_type[*i], node->id, SEM_FUNC_PARAM_RET_ERR);
 
                 // generate parameter
+                gen_fun_par_to_be_sent(token, (i + 1) , global_call);
 
                 return function_param_list_others(p_data, global_call, i, func);
                 break;  
@@ -1121,7 +1136,9 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
         case TT_INTEGER:
             //checks type
             CHECK_VARS(func->fun_extension->param_type[i], type, SEM_FUNC_PARAM_RET_ERR);
-            // GENERATE parameter
+            
+            //GENEROVANIE 
+            gen_fun_par_to_be_sent(token, (i + 1) , global_call);
 
             return function_param_list_others(p_data, global_call, i, func);
             break;
@@ -1139,6 +1156,7 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
             CHECK_VARS(func->fun_extension->param_type[i], node->id, SEM_FUNC_PARAM_RET_ERR);
 
             // generate parameter
+            gen_fun_par_to_be_sent(token, (i + 1) , global_call);
             return function_param_list_others(p_data, global_call, i, func);
 
             break;
@@ -1169,10 +1187,8 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
         set_error(SEM_UNDEFINED_ERR);
         return false;
     }
-
     // check if function was defined
     CHECK_VARS(func->fun_extension->is_func_defined, true, SEM_UNDEFINED_ERR);
-
 
     GET_TOKEN(token, p_data->get_token);
 
@@ -1180,15 +1196,15 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     if (token->type == TT_RIGHT_PAR)
     {   
         // TODO CALL EMPTY function
-
+        gen_fun_call(fun_id, global_call);
         //generuj call pre funkciu pouzi GLOBAL_CALL
 
         return true;
     }
     else if (function_param_list(p_data, global_call, func))
     {
-        
-        //GENERUJ NAVESTI FUNKCIE A VYBER RETURNY
+        gen_fun_call(fun_id, global_call);
+        //GENERATE CALL
 
         return true;
     }
