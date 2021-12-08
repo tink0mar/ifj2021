@@ -211,7 +211,6 @@ void number(Token *token, char c) {
                     state = S_DOT;
                     break;
                 }else {
-                    printf("jsme u vypisu\n");
                     char *junk = NULL;
                     token->attribs.integer =  (int) strtol( token->attribs.string, &junk, 10);
                     if (strlen(junk) == 0) {
