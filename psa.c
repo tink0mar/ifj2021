@@ -9,46 +9,6 @@
 
 #include "psa.h"
 
-// REMOVE
-char *PsaItemTypeStrings[] = {
-    "#",
-    "*",
-    "/",
-    "//",
-    "+",
-    "-",
-    "..",
-    "id",
-    "int",
-    "numb",
-    "str",
-    "(",
-    ")",
-    "$",
-    "E",
-    "<",
-    "I_NULL"
-};
-
-// REMOVE
-void print_psa_stack(PsaStack *stack){
-
-    if( psa_stack_is_empty( stack ) ){
-
-        fprintf(stderr, "Stack is empty.\n");
-
-    }else {
-
-        for( int i = 0; i < stack->size; i++ ){
-            fprintf(stderr, "stack[%i] = %s\n", i, PsaItemTypeStrings[ stack->content[i].type ] );
-        }
-
-        fprintf(stderr, "\n");
-
-    }
-
-}
-
 // Create an empty token that will be given to items without token
 Token empty_token;
 
@@ -135,20 +95,20 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
         case TT_IDENTIFIER:
 
             // Search in symtable for id's type
-            // node = bst_search_in_stack( sym_stack, token->attribs.string );
+            node = bst_search_in_stack( sym_stack, token->attribs.string );
 
-            // if( node == NULL ){
-            //
-            //     // TODO error
-            //     // node sa nenašiel v symtable => neplatny identifikator
-            //
-            // }else{
+            if( node == NULL ){
+
+                // Node wasn't found in symtable => undefined identifier
+                set_error( SEM_UNDEFINED_ERR );
+
+            }else{
 
                 item.data_type = INT;
                 item.type = I_ID;
                 break;
 
-            // }
+            }
 
         default:
             item.data_type = NOTHING;
@@ -163,7 +123,7 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
 
 }
 
-void psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, SymStack *sym_stack){
+bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, SymStack *sym_stack){
 
     // Push the item to psa stack
     psa_stack_push( stack, entry_item->terminal, entry_item->type, entry_item->data_type, entry_item->token_representation );
@@ -173,6 +133,13 @@ void psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_t
 
     // Convert new token to psa stack's item
     *entry_item = token_to_psa_stack_item( entry_token, sym_stack );
+
+    // If there is an error
+    if( num_error != 0 ){
+        return false;
+    }
+
+    return true;
 
 };
 
@@ -299,6 +266,9 @@ bool psa_reduce(PsaStack *stack){
 
         if( top_item_type == I_PLUS || top_item_type == I_MINUS || top_item_type == I_MUL ){
 
+            // Save the operand type
+            PsaItemType operand_type = top_item_type;
+
             psa_reduce_pop_and_update( stack, &top_item_type );
 
             if( top_item_type == I_EXPR ){
@@ -322,19 +292,111 @@ bool psa_reduce(PsaStack *stack){
 
                             stack->content[ stack->top_index ].data_type = INT;
 
+                            if( operand_type == I_PLUS ){
+
+                                // Generate output code - don't change type of the expressions
+                                gen_op_adds( 0 );
+
+                            }else if( operand_type == I_MINUS ){
+
+                                // Generate output code - don't change type of the expressions
+                                gen_op_subs( 0 );
+
+                            }else if( operand_type == I_MUL ){
+
+                                // Generate output code - don't change type of the expressions
+                                gen_op_muls( 0 );
+
+                            }else{
+
+                                // If SOMEHOW is the type of the operant different
+                                set_error( INTERNAL_ERR );
+                                return false;
+
+                            }
+
                         }else{
 
                             stack->content[ stack->top_index ].data_type = NUM;
 
                             if( expr_1_data_type == INT ){
 
-                                // TODO Pretypovať EXPR 1 na NUM
+
+                                if( operand_type == I_PLUS ){
+
+                                    // Generate output code - change type of the first expression
+                                    gen_op_adds( 1 );
+
+                                }else if( operand_type == I_MINUS ){
+
+                                    // Generate output code - change type of the first expression
+                                    gen_op_subs( 1 );
+
+                                }else if( operand_type == I_MUL ){
+
+                                    // Generate output code - change type of the first expression
+                                    gen_op_muls( 1 );
+
+                                }else{
+
+                                    // If SOMEHOW is the type of the operant different
+                                    set_error( INTERNAL_ERR );
+                                    return false;
+
+                                }
 
                             }
 
                             if( expr_2_data_type == INT ){
 
-                                // TODO Pretypovať EXPR 2 na NUM
+                                if( operand_type == I_PLUS ){
+
+                                    // Generate output code - change type of the second expression
+                                    gen_op_adds( 2 );
+
+                                }else if( operand_type == I_MINUS ){
+
+                                    // Generate output code - change type of the second expression
+                                    gen_op_subs( 2 );
+
+                                }else if( operand_type == I_MUL ){
+
+                                    // Generate output code - change type of the second expression
+                                    gen_op_muls( 2 );
+
+                                }else{
+
+                                    // If SOMEHOW is the type of the operant different
+                                    set_error( INTERNAL_ERR );
+                                    return false;
+
+                                }
+
+                            // If both expressions types are NUM
+                            }else{
+
+                                if( operand_type == I_PLUS ){
+
+                                    // Generate output code - don't change type of the expressions
+                                    gen_op_adds( 0 );
+
+                                }else if( operand_type == I_MINUS ){
+
+                                    // Generate output code - don't change type of the expressions
+                                    gen_op_subs( 0 );
+
+                                }else if( operand_type == I_MUL ){
+
+                                    // Generate output code - don't change type of the expressions
+                                    gen_op_muls( 0 );
+
+                                }else{
+
+                                    // If SOMEHOW is the type of the operant different
+                                    set_error( INTERNAL_ERR );
+                                    return false;
+
+                                }
 
                             }
 
@@ -368,13 +430,11 @@ bool psa_reduce(PsaStack *stack){
 
         }else if( top_item_type == I_DIV ){
 
-            // TODO Pretypovať EXPR 2 na NUM
-
             psa_reduce_pop_and_update( stack, &top_item_type );
 
             if( top_item_type == I_EXPR ){
 
-                // TODO Pretypovať EXPR 1 na NUM
+                DataType expr_1_data_type = stack->content[ stack->top_index ].data_type;
 
                 psa_reduce_pop_and_update( stack, &top_item_type );
 
@@ -385,6 +445,28 @@ bool psa_reduce(PsaStack *stack){
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = NUM;
                     stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    if( expr_1_data_type == INT && expr_2_data_type == INT ){
+
+                        // Generate output code
+                        gen_op_divs( 3 );
+
+                    }else if( expr_1_data_type == INT ){
+
+                        // Generate output code
+                        gen_op_divs( 1 );
+
+                    }else if( expr_2_data_type == INT ){
+
+                        // Generate output code
+                        gen_op_divs( 2 );
+
+                    }else {
+
+                        // Generate output code
+                        gen_op_divs( 0 );
+
+                    }
 
                     return true;
 
@@ -403,8 +485,6 @@ bool psa_reduce(PsaStack *stack){
             }
 
         }else if( top_item_type == I_FLOOR_DIV ){
-
-            // TODO pretypovať oba operandy na NUM
 
             if( expr_2_data_type == INT ){
 
@@ -425,6 +505,9 @@ bool psa_reduce(PsaStack *stack){
                             stack->content[ stack->top_index ].type = I_EXPR;
                             stack->content[ stack->top_index ].data_type = NUM;
                             stack->content[ stack->top_index ].token_representation = empty_token;
+
+                            // Generate output code
+                            gen_op_idivs( 3 );
 
                             return true;
 
@@ -485,6 +568,9 @@ bool psa_reduce(PsaStack *stack){
                             stack->content[ stack->top_index ].data_type = STR;
                             stack->content[ stack->top_index ].token_representation = empty_token;
 
+                            // Generate output code
+                            gen_op_concats();
+
                             return true;
 
                         }else{
@@ -532,6 +618,9 @@ bool psa_reduce(PsaStack *stack){
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = INT;
                     stack->content[ stack->top_index ].token_representation = empty_token;
+
+                    // Generate output code
+                    gen_op_hashtag();
 
                     return true;
 
@@ -652,13 +741,15 @@ DataType psa(ParserData *parser_data){
     // Convert entry token to psa stack's item
     PsaStackItem entry_item = token_to_psa_stack_item( parser_data->token, &parser_data->stack );
 
+    if( num_error != 0 ){
+
+        return NOTHING;
+
+    }
+
     do {
 
-        print_psa_stack( stack );
-
         if( table[top_terminal->type][entry_item.type] == '>' ){
-
-            fprintf(stderr, "REDUCTION - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
 
             // REDUCTION
             if( psa_reduce( stack ) == false ){
@@ -667,18 +758,23 @@ DataType psa(ParserData *parser_data){
 
         }else if( table[top_terminal->type][entry_item.type] == '<' ){
 
-            printf("SHIFT - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
-
             // SHIFT
             psa_modify_top_terminal( stack );
-            psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack );
+
+            if( psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack ) == false ){
+
+                return NOTHING;
+
+            }
 
         }else if( table[top_terminal->type][entry_item.type] == '=' ){
 
-            // printf("PUSH - Entry Token = %s\n", PsaItemTypeStrings[entry_item.type]);
-
             // PUSH and NEW TOKEN
-            psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack );
+            if( psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack ) == false ){
+
+                return NOTHING;
+
+            }
 
         }else if( table[top_terminal->type][entry_item.type] == 'E' ){
 
@@ -696,8 +792,6 @@ DataType psa(ParserData *parser_data){
         top_terminal = psa_stack_top_terminal( stack );
 
     } while ( entry_item.type != I_DOLLAR || top_terminal->type != I_DOLLAR );
-
-    print_psa_stack( stack );
 
     // If for some reason the stack is NULL
     if( stack == NULL ){
@@ -722,39 +816,73 @@ DataType psa(ParserData *parser_data){
 
 }
 
-// REMOVE
-int main(){
+bool psa_condition(ParserData *parser_data, bool its_if){
 
-    // Malloc place for ParserData
-    ParserData *parser_data = malloc( sizeof( ParserData ) );
+    // E == e
+    // Check the E expression
+    DataType expr_1_data_type = psa(parser_data);
 
-    // Malloc place for token
-    Token *token = malloc( sizeof( Token ) );
+    // Check if there was any error in psa
+    if( num_error != 0 ){
 
-    // Check malloc return
-    if( token == NULL || parser_data == NULL ){
-        printf("Error token malloc.\n");
-        return 0;
+        return false;
+
     }
 
-    parser_data->token = token;
+    Token condition_operator_token = parser_data->token;
 
-    // Load token
-    get_token( token );
+    // If token type is in range of condition operators
+    // token.type >= TT_GREATER
+    // token.type <= TT_EQ
+    if( condition_operator_token.type >= TT_GREATER && condition_operator_token.type <= TT_EQ  ){
 
-    DataType data_type_returned_from_psa = psa( parser_data );
+        // e == E
+        // Check the E expression
+        DataType expr_2_data_type = psa(parser_data);
 
-    if( num_error != 0 || data_type_returned_from_psa >= NOTHING ){
+        // Check if there was any error in psa
+        if( num_error != 0 ){
 
-        printf("MISTAKE!\n");
-        error_mess( num_error );
-        printf("\nRETURNED DATA TYPE: %d\n", data_type_returned_from_psa);
+            return false;
+
+        }
+
+        // Semantic check
+        if( ( expr_1_data_type == INT || expr_2_data_type == NUM ) && expr_2_data_type == STR ){
+
+            set_error( SEM_T_UNCOM_EXPRESS_ERR );
+            return false;
+
+        }else if( ( expr_2_data_type == INT || expr_2_data_type == NUM ) && expr_1_data_type == STR ){
+
+            set_error( SEM_T_UNCOM_EXPRESS_ERR );
+            return false;
+
+        }
+
+        // If its condition for an IF statement
+        if( its_if ){
+
+            gen_if( parser_data->stack.top_index, condition_operator_token );
+
+        // If its condition for a while statement
+        }else{
+
+            gen_while( parser_data->stack.top_index, condition_operator_token );
+
+        }
+
+        return true;
 
     }else{
 
-        printf("WORKS!\n");
-        printf("RETURNED DATA TYPE: %d\n", data_type_returned_from_psa);
+        set_error( SYNTACTIC_ERR );
+        return false;
 
     }
+
+}
+
+int main(){
 
 }

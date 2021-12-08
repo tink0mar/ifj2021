@@ -7,13 +7,13 @@
  * Date: 24.11.2021
  */
 
-#ifndef PSA_H_
-#define PSA_H_
+#ifndef PSA_H
+#define PSA_H
 
 #include "scanner.h"
 #include "symtable.h"
 #include "parser.h"
-#include "generator.h"
+// #include "generator.c"
 #include <stdio.h> // REMOVE
 #include <stdlib.h>
 #include <stdbool.h>
@@ -60,7 +60,7 @@ typedef struct {
 } PsaStackItem;
 
 /**
- * @struct Structure represents the stack used for PSA
+ * @struct Structure represents a stack used for PSA
 */
 typedef struct {
     PsaStackItem *content;
@@ -75,25 +75,69 @@ typedef struct {
  */
 PsaStack *psa_stack_create();
 
+/**
+ * @brief Realloc the capacity of the stack
+ * @param stack The stack
+ * @param new_capacity Integer representing the new capacity
+ * @return
+ */
 void psa_stack_realloc_capacity(PsaStack *stack, int new_capacity);
+
+/**
+ * @brief Check if the size of the stack isn't too low according to capacity
+ * @param stack The stack
+ * @return
+ */
 void psa_stack_check_low_capacity(PsaStack *stack);
+
+/**
+ * @brief Check if the size of the stack isn't too high according to capacity
+ * @param stack The stack
+ * @return
+ */
 void psa_stack_check_high_capacity(PsaStack *stack);
 
 /**
  * @brief A function to recognize whether a stack is empty or not
- * @param stack a stack that will be checked whether it's empty
+ * @param stack The stack that will be checked whether it's empty
  * @return true if the stack is empty, otherwise false
 */
 bool psa_stack_is_empty(PsaStack *stack);
 
+/**
+ * @brief Push new item to stack
+ * @param stack The stack
+ * @return
+ */
 void psa_stack_push(PsaStack *stack, bool terminal, PsaItemType type, DataType data_type, Token token_representation);
+
+/**
+ * @brief Pop an item from stack
+ * @param stack The stack
+ * @return
+ */
 void psa_stack_pop(PsaStack *stack);
+
+/**
+ * @brief Function returns the top item of a stack
+ * @param stack The stack
+ * @return PsaStackItem *
+ */
 PsaStackItem *psa_stack_top(PsaStack *stack);
+
+/**
+ * @brief Function returns the top terminal item of a stack
+ * @param stack The stack
+ * @return PsaStackItem *
+ */
 PsaStackItem *psa_stack_top_terminal(PsaStack *stack);
 
-// REMOVE BELLOW FUNCTIONS
-//void print_psa_stack(PsaStack *stack);
-void print_psa_stack_top(PsaStack *stack);
-void print_psa_stack_configuration(PsaStack *stack);
+PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack);
+bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, SymStack *sym_stack);
+void psa_modify_top_terminal(PsaStack *stack);
+void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type);
+bool psa_reduce(PsaStack *stack);
+DataType psa(ParserData *parser_data);
+bool psa_condition(ParserData *parser_data, bool its_if)
 
 #endif
