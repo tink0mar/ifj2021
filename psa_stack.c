@@ -143,3 +143,10 @@ PsaStackItem *psa_stack_top_terminal(PsaStack *stack){
     }
 
 }
+
+void psa_stack_destroy(PsaStack *stack){
+
+    free( stack->content );
+    free( stack );
+
+}

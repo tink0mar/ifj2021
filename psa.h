@@ -138,5 +138,6 @@ void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type);
 bool psa_reduce(PsaStack *stack, ParserData *parser_data);
 DataType psa(ParserData *parser_data);
 bool psa_condition(ParserData *parser_data, bool its_if);
+void psa_stack_destroy(PsaStack *stack);
 
 #endif

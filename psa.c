@@ -106,19 +106,63 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
             break;
         case TT_IDENTIFIER:
 
-            // Search in symtable for id's type
-            node = bst_search_in_stack( &parser_data->stack, token->attribs.string );
+            // Load the next token
+            // Copied GET_TOKEN macro because of the return inside it
+            if( dll_is_active_last( &parser_data->dll_list ) == true ){
 
-            if( node == NULL ){
+                if( parser_data->get_token == true ){
 
-                // Node wasn't found in symtable => undefined identifier
-                set_error( SEM_UNDEFINED_ERR );
+                    get_token( token );
+
+                    if( num_error != 0 ){
+
+                        // return undefined item
+                        // MUST CHECK AFTER token_to_psa_stack_item() CALL WHETHER num_error != 0
+                        return item;
+
+                    }
+
+                }else{
+                    parser_data->get_token = true;
+                }
 
             }else{
-                // why there was INT
-                item.data_type = node->id;
-                item.type = I_ID;
+                dll_set_active_next( &parser_data->dll_list );
+            }
+
+            // Check whether the next token is "=" or ","
+            if( token->type == TT_ASSIGN || token->type == TT_COMMA ){
+
+                // Unget the next token
+                // UNGET()
+
+                // Set the current ID token as dollar - expression ending item
+                item.data_type = NOTHING;
+                item.type = I_DOLLAR;
+                parser_data->get_token = false;
+
                 break;
+
+            }else{
+
+                // Unget the next token
+                // UNGET()
+
+                // Search in symtable for id's type
+                node = bst_search_in_stack( &parser_data->stack, token->attribs.string );
+
+                if( node == NULL ){
+
+                    // Node wasn't found in symtable => undefined identifier
+                    set_error( SEM_UNDEFINED_ERR );
+
+                }else{
+                    // why there was INT
+                    item.data_type = node->id;
+                    item.type = I_ID;
+                    break;
+
+                }
 
             }
 
@@ -244,6 +288,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
         Token tmp_token = stack->content[ stack->top_index ].token_representation;
+        tmp_token.attribs = stack->content[ stack->top_index ].token_representation.attribs;
 
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
@@ -276,6 +321,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
         Token tmp_token = stack->content[ stack->top_index ].token_representation;
+        tmp_token.attribs = stack->content[ stack->top_index ].token_representation.attribs;
 
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
@@ -468,7 +514,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                 }
 
             }else{
-                
+
                 set_error( SYNTACTIC_ERR );
                 return false;
 
@@ -517,7 +563,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     return true;
 
                 }else{
-                    
+
                     set_error( SYNTACTIC_ERR );
                     return false;
 
@@ -558,7 +604,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             return true;
 
                         }else{
-                            
+
                             set_error( SYNTACTIC_ERR );
                             return false;
 
@@ -574,7 +620,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     }
 
                 }else{
-                    
+
                     set_error( SYNTACTIC_ERR );
                     return false;
 
@@ -620,7 +666,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             return true;
 
                         }else{
-                            
+
                             set_error( SYNTACTIC_ERR );
                             return false;
 
@@ -823,7 +869,7 @@ DataType psa(ParserData *parser_data){
             }
 
         }else if( table[top_terminal->type][entry_item.type] == 'E' ){
-            
+
             set_error( SYNTACTIC_ERR );
             break;
 
@@ -856,7 +902,7 @@ DataType psa(ParserData *parser_data){
         }
 
         // Return DataType of the final expression to parser.c
-        
+
         return stack->content[ stack->top_index ].data_type;
 
     }
@@ -881,7 +927,6 @@ bool psa_condition(ParserData *parser_data, bool its_if){
     // If token type is in range of condition operators
     // token.type >= TT_GREATER
     // token.type <= TT_EQ
-    fprintf(stderr, "_%d_", condition_operator_token.type);
 
     if( condition_operator_token.type >= TT_GREATER && condition_operator_token.type <= TT_EQ  ){
 
@@ -889,12 +934,12 @@ bool psa_condition(ParserData *parser_data, bool its_if){
         // Check the E expression
         GET_TOKEN(parser_data->token, parser_data->get_token, &parser_data->dll_list);
         GET_TOKEN(parser_data->token, parser_data->get_token, &parser_data->dll_list);
-        fprintf(stderr, "_%d_", parser_data->token->type);
+
         DataType expr_2_data_type = psa(parser_data);
 
         // Check if there was any error in psa
         if( num_error != 0 ){
-            
+
             return false;
 
         }
@@ -927,7 +972,7 @@ bool psa_condition(ParserData *parser_data, bool its_if){
         return true;
 
     }else{
-        
+
         set_error( SYNTACTIC_ERR );
         return false;
 
