@@ -1,6 +1,8 @@
 #include "dll.h"
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
+#include "parser.h"
 
 void dll_init( DLList *list ) {
 
@@ -8,14 +10,29 @@ void dll_init( DLList *list ) {
     list->activeElement = NULL;
     list->lastElement = NULL;
 }
-int dll_insert( DLList *list, Token *token ) {
+
+char * copy_str_dll(char *src){
+    if (src == NULL){
+        return NULL;
+    }
+    char *ptr = malloc(sizeof(char) * (strlen(src) + 1) ); \
+    strcpy(ptr, src);
+}
+
+int dll_insert( DLList *list, Token *token1 ) {
 
     DLLElementPtr newElemPtr = malloc(sizeof(struct DLLElement));
+    newElemPtr->token = (Token *)malloc(sizeof( Token));
+
     if (newElemPtr != NULL) {
-        newElemPtr->token = token;
+        
+        newElemPtr->token->type = token1->type;
+        newElemPtr->token->attribs.number = token1->attribs.number;
+        newElemPtr->token->attribs.integer = token1->attribs.integer;
+        newElemPtr->token->attribs.string = copy_str_dll(token1->attribs.string);
         newElemPtr->previousElement = list->lastElement;
         newElemPtr->nextElement = NULL;
-
+        
         if (list->firstElement != NULL) {
             list->lastElement->nextElement = newElemPtr;
         }
@@ -64,6 +81,7 @@ void dll_set_active_last( DLList *list ) {
         list->activeElement = list->lastElement;
     }
 }
+
 bool dll_is_active_last( DLList *list ) {
     if(list->firstElement == NULL) { 
         return true;
@@ -89,3 +107,10 @@ void dll_dispose( DLList *list ) {
     list->activeElement = NULL;
     list->lastElement = NULL;
 }
+
+Token *dll_return_token( DLList *list ){
+
+    return list->activeElement->token;
+
+}
+

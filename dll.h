@@ -73,4 +73,7 @@ bool dll_is_active_last( DLList *list );
  * @param list The list address
  */
 void dll_dispose( DLList *list );
+
+Token *dll_return_token( DLList *list );
+
 #endif //DLL_H

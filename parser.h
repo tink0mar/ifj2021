@@ -42,8 +42,19 @@
             }\
         } else {READ = true;}\
     } else {\
-        dll_set_active_next(DLL);\
+        if (READ == true){\
+            dll_set_active_next(DLL);\
+            p_data->TOKEN = dll_return_token(&p_data->dll_list);\
+            TOKEN = p_data->TOKEN;\
+        }\
+        else {\
+            READ = true;\
+        }\
     }\
+
+#define UNGET_TOKEN(TOKEN) \
+    dll_set_active_previous(&p_data->dll_list);\
+    TOKEN = dll_return_token(&p_data->dll_list);\
 
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \
@@ -79,8 +90,12 @@
 #define VYPIS \
      fprintf(stderr, "pipik\n");\
 
-#define TOKEN \
-    fprintf(stderr, "%s\n", tokens[token->type]);\
+#define TOKENN \
+    fprintf(stderr, "%s\n", tokens[p_data->token->type]);\
+    fprintf(stderr, "%f\n",token->attribs.number);\
+    fprintf(stderr, "%s\n", token->attribs.string);\
+    fprintf(stderr, "%d\n", token->attribs.integer);\
+
 
 typedef struct {
 

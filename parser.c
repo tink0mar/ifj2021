@@ -227,10 +227,9 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
 
 bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
     Token *token = p_data->token;
-    GET_TOKEN(token, p_data->get_token, &(p_data->dll_list))
     int index;
     DataType type;
-
+    
     switch (token->type){
         case TT_IDENTIFIER:
         case TT_KW_LOCAL:
@@ -275,6 +274,9 @@ bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
                     set_error(SYNTACTIC_ERR);
                     return false;
             }
+        default:
+            set_error(2);
+            return false;
     }
 }
 
@@ -293,8 +295,9 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
     switch(token->type){
         case TT_IDENTIFIER:
             id_name = copy_str(token->attribs.string);
+            
             GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
-
+            
             if (token->type == TT_LEFT_PAR){
                     bool is_global = false; 
                     //FUNCTION CALL /
@@ -306,8 +309,11 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
                         return false;
                     }
 
-            } else {
-                //dll_set_active_previous(&p_data->dll_list);
+            } else { 
+                dll_set_active_previous(&p_data->dll_list);
+                p_data->token = dll_return_token(&p_data->dll_list);
+                token = p_data->token;
+
                 break;
             }
 
@@ -320,12 +326,12 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
             break;
 
         default:
-            VYPIS
+            
             set_error(SYNTACTIC_ERR);
             return false;
     
     }
-
+    
     type = psa(p_data);
     
     //recursion 
@@ -334,12 +340,13 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
         sym_stack_pop(pa_stack);
         //
         
-        
+
         if (type != var->id){
             set_error(5);
+            
             return false;
         }
-
+        
         //GENERATE POP
         int index = bst_search_in_stack_gen(&(p_data->stack), var->key);
         gen_pop_var(var->key, index);
@@ -358,6 +365,8 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
 bool id_list(ParserData *p_data, char *id){
     Token *token = p_data->token;
     // stack for variables, every item of stack is tree with one node
+    
+    
     SymStack pa_stack;
     sym_stack_init(&pa_stack);
     
@@ -382,12 +391,13 @@ bool id_list(ParserData *p_data, char *id){
                     return false;
                 }
             } else {
-                
+                    
                 set_error(SYNTACTIC_ERR);
                 return false;
             }
 
         } else if (token->type == TT_ASSIGN){
+            
             break;
         } else {
             
@@ -439,7 +449,7 @@ bool return_expr_list_others(ParserData *p_data, TreeNode *func, int *return_len
                 case TT_IDENTIFIER:
                     
                     type = psa(p_data);
-                    fprintf(stderr, "___%d____", type);
+                    
                     if ( type != func->fun_extension->return_type[*return_len] ){
                         
                         set_error(5);
@@ -567,7 +577,7 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
                 set_error(5);
                 return false; 
             }
-            fprintf(stderr,"C%dC", num_error);
+            
             //GENERATE POP
             gen_pop_var(var_id, p_data->stack.topIndex);
             
@@ -747,7 +757,8 @@ bool if_clause(ParserData *p_data, char *fun_id) {
     
     // GENEROVANIE PODMIENKY A PRVEHO LABELU
     // true = IF
-    
+    NEW_SYMTABLE_FRAME
+
     if (psa_condition(p_data, true) == false){
         
         return false;
@@ -759,7 +770,7 @@ bool if_clause(ParserData *p_data, char *fun_id) {
     CHECK_VARS(token->type, TT_KW_THEN, SYNTACTIC_ERR);
 
     //generate new symtable
-    NEW_SYMTABLE_FRAME
+    
 
     bool is_if_block = true; // we are in if block
     // BLOCK_IF
@@ -769,11 +780,13 @@ bool if_clause(ParserData *p_data, char *fun_id) {
         return false;
     } else {
         // == true, ELSE was read
-        
+        gen_if_jump_end(p_data->stack.topIndex + 1);
+
+        NEW_SYMTABLE_FRAME
         //GENEROVANIE DRUHEHO LABELU
         gen_else(p_data->stack.topIndex);
 
-        NEW_SYMTABLE_FRAME
+        
 
         bool is_if_block = false; // we are in else block which ends with end
         if (block_fwe(p_data, is_if_block, fun_id) == true){
@@ -803,8 +816,10 @@ bool if_clause(ParserData *p_data, char *fun_id) {
 bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
     
     Token *token = p_data->token;
+    TOKENN
+    fprintf(stderr, "[%d]\n", p_data->get_token);
     GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
-    
+    TOKENN
     char *id_name;
     bool value, value1;
     
@@ -817,16 +832,12 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
         //p_data->get_token = false;
         return true;
     }
-    
+     
     switch (token->type){
 
-        case TT_KW_LOCAL:
-            value = local(p_data);
-            //fprintf(stderr, "xx%dxx", value);
-            value1 = block_fwe(p_data, is_if_block, fun_id);
-            //fprintf(stderr, "xx%dxx", value1);
+        case TT_KW_LOCAL:           
             
-            return value && value1;
+            return local(p_data) && block_fwe(p_data, is_if_block, fun_id);
 
         case TT_KW_IF:
             return if_clause(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
@@ -844,11 +855,16 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
                 //FUNCTION CALL // TODO RETURNOVANIE
                 return (function_call(p_data, id_name, false)) && block_fwe(p_data, is_if_block, fun_id);
             } else {
-                
+                 
                 dll_set_active_previous(&p_data->dll_list);
-                
+                p_data->token = dll_return_token(&p_data->dll_list);
+                token = p_data->token;
+
                 // TODO DOUBLE LINKED LIST
-                return id_list(p_data, id_name) && block_fwe(p_data, is_if_block, fun_id); 
+                
+                fprintf(stderr, "[%d]", value = id_list(p_data, id_name));
+
+                return value && block_fwe(p_data, is_if_block, fun_id); 
 
             }
 
@@ -856,7 +872,7 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
             return return_expr_list(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
 
         default:
-                    
+                   
             set_error(SYNTACTIC_ERR);
             return false;
 
@@ -1418,7 +1434,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
                 type = find_data_type(token->type);
                 //checks type
                 //if (strcmp(func->id, "write")){
-                fprintf(stderr, "_%d_", type);
+                
                 CHECK_VARS(func->fun_extension->param_type[*i], type, SEM_FUNC_PARAM_RET_ERR);
                 //} else {
                     //gen_write(token);
@@ -1583,6 +1599,17 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     }
 }
 
+
+bool predefined_func(ParserData *p_data){
+
+    if ( bst_insert_fun(p_data->global_frame, "write", 0, NULL, 0, NULL, true) == false){
+        return false;
+    }
+
+
+}
+
+
 /**
  * <body> -> eps
  * <body> -> GLOBAL ID : FUNCTION ( <data_types_list> ) <return_types_list> <body>
@@ -1591,7 +1618,9 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
  */
 
 bool body(ParserData *p_data)
-{
+{   
+    predefined_func(p_data);
+
     Token *token = p_data->token;
 
     GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));

@@ -64,5 +64,6 @@ bool gen_if_end(int top_index);
 bool gen_while_label_name(bool start_end, int top_index);
 bool gen_while(int top_index, Token token);
 bool gen_while_end(int top_index);
+bool gen_if_jump_end(int top_index);
 
 #endif

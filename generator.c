@@ -535,6 +535,9 @@ bool gen_move_ret_to_val(char *id, int topindex, int index){
 
 //generate function label
 bool gen_fun_label(char *label_id){
+    PRTC_N()
+    PRTC_N("#FUNKCIA ZACIATOK")
+    PRTC_N()
     PRTC("LABEL $");
     PRTC(label_id)
     PRTC_N()
@@ -646,7 +649,7 @@ bool gen_if(int top_index, Token token){
             PRTC_N("GTS")
             PRTC_N("PUSHS bool@false")
             PRTC("JUMPIFEQS ")
-            gen_if_label_name(false, top_index);
+            gen_if_label_name(true, top_index);
             PRTC_N()
             break;
 
@@ -654,7 +657,7 @@ bool gen_if(int top_index, Token token){
             PRTC_N("LTS")
             PRTC_N("PUSHS bool@false")
             PRTC("JUMPIFEQS ")
-            gen_if_label_name(false, top_index);
+            gen_if_label_name(true, top_index);
             PRTC_N()
             break;
 
@@ -668,7 +671,7 @@ bool gen_if(int top_index, Token token){
             PRTC_N("LTS")
             PRTC_N("PUSHS bool@false")
             PRTC("JUMPIFEQS ")
-            gen_if_label_name(false, top_index);
+            gen_if_label_name(true, top_index);
             PRTC_N()
             break;
 
@@ -681,7 +684,7 @@ bool gen_if(int top_index, Token token){
             PRTC_N("GTS")
             PRTC_N("PUSHS bool@false")
             PRTC("JUMPIFEQS ")
-            gen_if_label_name(false, top_index);
+            gen_if_label_name(true, top_index);
             PRTC_N()
             break;
 
@@ -704,12 +707,15 @@ bool gen_if(int top_index, Token token){
     return true;
 }
 
-bool gen_else(int top_index){
-
+bool gen_if_jump_end(int top_index){
     PRTC("JUMP ")
     gen_if_label_name(false, top_index);
     PRTC_N()
 
+}
+
+bool gen_else(int top_index){
+    
     PRTC("LABEL ")
     gen_if_label_name(true, top_index);
     PRTC_N()
