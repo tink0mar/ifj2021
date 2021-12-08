@@ -37,7 +37,7 @@ bool gen_op_concat();
 bool gen_op_hashtag();
 bool gen_nil_nil();
 bool gen_frame_global(bool global);
-bool gen_move_ret_to_val(char *id, int index);
+bool gen_move_ret_to_val(char *id, int topindex, int index);
 bool gen_fun_label(char *label_id);
 bool gen_popframe();
 bool gen_fun_par_to_be_sent(Token *token, int index, bool global);

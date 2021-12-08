@@ -297,11 +297,14 @@ bool gen_chr(){
 // GENERATE CODE FOR PSA 
 
 // generate pushs for psa
-bool gen_push_E(Token token){
+bool gen_push_E(Token token, int index){
     char *term = get_frame_term_str(&token, T_LF);
 
     PRTC("PUSHS ");
     PRTC(term)
+    if (token.type == TT_IDENTIFIER){
+        PRTC_INT(index)
+    }
     PRTC_N();
     return true;
 }
@@ -461,9 +464,10 @@ bool gen_fun_call(char *fun_id, bool global){
 }
 
 //move return to variable
-bool gen_move_ret_to_val(char *id, int index){
+bool gen_move_ret_to_val(char *id, int topindex, int index){
     PRTC("MOVE LF@")
     PRTC(id)
+    PRTC_INT(topindex)
     PRTC(" TF@\%_ret")
     PRTC_INT(index)
     PRTC_N()
@@ -486,6 +490,7 @@ bool gen_fun_label(char *label_id){
 
 
 // generate function parameters,which recieve data from call
+// index is poradie
 bool gen_fun_par(char *id, int index){
     // DEFVAR LF@id
     PRTC("DEFVAR LF@")
@@ -541,6 +546,11 @@ bool gen_var(char *id, int top_index){
     PRTC(id)
     PRTC_INT(top_index)
     PRTC_N()
+
+    PRTC("MOVE LF@")
+    PRTC(id)
+    PRTC_INT(top_index)
+    PRTC_N(" nil@nil")
     return true;
 }
 
@@ -551,6 +561,7 @@ bool gen_pop_var(char *id, int top_index){
     PRTC_N()
     return true;
 }
+
 
 /** IF */
 
