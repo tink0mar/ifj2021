@@ -12,7 +12,7 @@
 // Create an empty token that will be given to items without token
 Token empty_token;
 
-PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
+PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
 
     PsaStackItem item;
 
@@ -44,30 +44,6 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
             item.data_type = NOTHING;
             item.type = I_HASHTAG;
             break;
-        case TT_GREATER:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
-        case TT_LESS:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
-        case TT_GREATER_OR_EQ:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
-        case TT_LESS_OR_EQ:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
-        case TT_NOT_EQ:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
-        case TT_EQ:
-            item.data_type = NOTHING;
-            item.type = I_DOLLAR;
-            break;
         case TT_LEFT_PAR:
             item.data_type = NOTHING;
             item.type = I_LEFT_PAR;
@@ -95,7 +71,7 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
         case TT_IDENTIFIER:
 
             // Search in symtable for id's type
-            node = bst_search_in_stack( sym_stack, token->attribs.string );
+            node = bst_search_in_stack( &parser_data->stack, token->attribs.string );
 
             if( node == NULL ){
 
@@ -113,6 +89,7 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
         default:
             item.data_type = NOTHING;
             item.type = I_DOLLAR;
+            parser_data->get_token = false;
             break;
     }
 
@@ -123,7 +100,7 @@ PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack){
 
 }
 
-bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, SymStack *sym_stack){
+bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, ParserData *parser_data){
 
     // Push the item to psa stack
     psa_stack_push( stack, entry_item->terminal, entry_item->type, entry_item->data_type, entry_item->token_representation );
@@ -132,7 +109,7 @@ bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_t
     get_token( entry_token );
 
     // Convert new token to psa stack's item
-    *entry_item = token_to_psa_stack_item( entry_token, sym_stack );
+    *entry_item = token_to_psa_stack_item( entry_token, parser_data );
 
     // If there is an error
     if( num_error != 0 ){
@@ -220,13 +197,45 @@ void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type){
 
 }
 
-bool psa_reduce(PsaStack *stack){
+bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
     // Get the top item's type
     PsaItemType top_item_type = stack->content[ stack->top_index ].type;
 
     // <id
-    if( top_item_type == I_ID || top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
+    if( top_item_type == I_ID ){
+
+        // Save the id's ( top item's ) data_type and token
+        DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
+        Token tmp_token = stack->content[ stack->top_index ].token_representation;
+
+        // Pop and update top_item_type
+        psa_reduce_pop_and_update( stack, &top_item_type );
+
+        // If expresion is bordered by < ("HANDLE" mark)
+        if( top_item_type == I_HANDLE ){
+
+            // Change the < item to EXPR item
+            stack->content[ stack->top_index ].terminal = false;
+            stack->content[ stack->top_index ].type = I_EXPR;
+            stack->content[ stack->top_index ].data_type = tmp_data_type;
+            stack->content[ stack->top_index ].token_representation = tmp_token;
+
+            int index = bst_search_in_stack_gen( &(parser_data->stack), tmp_token.attribs.string );
+
+            // Generate output code
+            gen_push_E( tmp_token, index );
+
+            return true;
+
+        }else{
+
+            set_error( INTERNAL_ERR );
+            return false;
+
+        }
+
+    }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
 
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
@@ -245,7 +254,7 @@ bool psa_reduce(PsaStack *stack){
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
             // Generate output code
-            gen_push_E( tmp_token );
+            gen_push_E( tmp_token, 0 );
 
             return true;
 
@@ -739,7 +748,7 @@ DataType psa(ParserData *parser_data){
     PsaStackItem *top_terminal = psa_stack_top_terminal( stack );
 
     // Convert entry token to psa stack's item
-    PsaStackItem entry_item = token_to_psa_stack_item( parser_data->token, &parser_data->stack );
+    PsaStackItem entry_item = token_to_psa_stack_item( parser_data->token, parser_data );
 
     if( num_error != 0 ){
 
@@ -761,7 +770,7 @@ DataType psa(ParserData *parser_data){
             // SHIFT
             psa_modify_top_terminal( stack );
 
-            if( psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack ) == false ){
+            if( psa_push_and_load( stack, &entry_item, parser_data->token, parser_data ) == false ){
 
                 return NOTHING;
 
@@ -770,7 +779,7 @@ DataType psa(ParserData *parser_data){
         }else if( table[top_terminal->type][entry_item.type] == '=' ){
 
             // PUSH and NEW TOKEN
-            if( psa_push_and_load( stack, &entry_item, parser_data->token, &parser_data->stack ) == false ){
+            if( psa_push_and_load( stack, &entry_item, parser_data->token, parser_data ) == false ){
 
                 return NOTHING;
 
