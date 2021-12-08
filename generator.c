@@ -308,11 +308,17 @@ bool gen_readn(){
     PRTC_N()
 }
 
-bool gen_write(Token *token){
+bool gen_write(Token *token, int topindex){
 
     PRTC("WRITE ")
     char *ptr = get_frame_term_str(token, T_LF);
+    PRTC(ptr)
 
+    if (token->type == TT_IDENTIFIER){
+        PRTC_INT(topindex)
+    }
+
+    PRTC_N()
 }
 
 bool gen_tointeger(){
@@ -549,15 +555,17 @@ bool gen_fun_label(char *label_id){
 
 // generate function parameters,which recieve data from call
 // index is poradie
-bool gen_fun_par(char *id, int index){
+bool gen_fun_par(char *id, int index, int topindex){
     // DEFVAR LF@id
     PRTC("DEFVAR LF@")
     PRTC(id)
+    PRTC_INT(topindex)
     PRTC_N()
 
     // MOVE LF@id LF@_index_
     PRTC("MOVE LF@")
     PRTC(id)
+    PRTC_INT(topindex)
     PRTC(" LF@\%")
     PRTC_INT(index);
     PRTC_N()

@@ -54,7 +54,8 @@
 
 #define UNGET_TOKEN(TOKEN) \
     dll_set_active_previous(&p_data->dll_list);\
-    TOKEN = dll_return_token(&p_data->dll_list);\
+    p_data->token = dll_return_token(&p_data->dll_list);\
+    TOKEN = p_data->token;\
 
 #define CHECK_VARS(A,B,ERR)\
     if (A != B) { \

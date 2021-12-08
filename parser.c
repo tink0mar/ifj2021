@@ -205,7 +205,7 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
             set_error(5);
         }
 
-        gen_move_ret_to_val(var->key, p_data->stack.topIndex , (pa_stack->topIndex + 1) );
+        gen_move_ret_to_val(var->key, p_data->stack.topIndex , (pa_stack->topIndex) );
         sym_stack_pop(pa_stack);
         count++;
     }
@@ -300,6 +300,7 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
             
             if (token->type == TT_LEFT_PAR){
                     bool is_global = false; 
+
                     //FUNCTION CALL /
                     if (function_call(p_data, id_name, false) == true){                
                         
@@ -310,9 +311,7 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
                     }
 
             } else { 
-                dll_set_active_previous(&p_data->dll_list);
-                p_data->token = dll_return_token(&p_data->dll_list);
-                token = p_data->token;
+                UNGET_TOKEN(token)
 
                 break;
             }
@@ -366,7 +365,7 @@ bool id_list(ParserData *p_data, char *id){
     Token *token = p_data->token;
     // stack for variables, every item of stack is tree with one node
     
-    
+        
     SymStack pa_stack;
     sym_stack_init(&pa_stack);
     
@@ -406,7 +405,6 @@ bool id_list(ParserData *p_data, char *id){
         }
     }
     //IDS WAS LOADED
-    
     return expression_list_and_func(p_data, &pa_stack);
 
 
@@ -602,11 +600,14 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
                     gen_move_ret_to_val(var_id, index ,0);
                     return true;
                 } else {
+                    
                     return false;
                 }
             } else {
                 //expression
-                dll_set_active_previous(&p_data->dll_list);
+                
+                UNGET_TOKEN(token)
+                
                 if (type != psa(p_data)) {
                     
                     set_error(5);
@@ -644,6 +645,7 @@ bool local_expr(ParserData *p_data, char *var_id, DataType type){
         case TT_KW_WHILE:
         case TT_KW_ELSE:
         case TT_KW_END:
+            
             //GENERATE VARIABLE
             gen_var(var_id, p_data->stack.topIndex);
 
@@ -816,10 +818,10 @@ bool if_clause(ParserData *p_data, char *fun_id) {
 bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
     
     Token *token = p_data->token;
-    TOKENN
-    fprintf(stderr, "[%d]\n", p_data->get_token);
+    
     GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
-    TOKENN
+    
+
     char *id_name;
     bool value, value1;
     
@@ -855,16 +857,13 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
                 //FUNCTION CALL // TODO RETURNOVANIE
                 return (function_call(p_data, id_name, false)) && block_fwe(p_data, is_if_block, fun_id);
             } else {
-                 
-                dll_set_active_previous(&p_data->dll_list);
-                p_data->token = dll_return_token(&p_data->dll_list);
-                token = p_data->token;
+                 VYPIS
+                UNGET_TOKEN(token)
 
                 // TODO DOUBLE LINKED LIST
                 
-                fprintf(stderr, "[%d]", value = id_list(p_data, id_name));
 
-                return value && block_fwe(p_data, is_if_block, fun_id); 
+                return id_list(p_data, id_name) && block_fwe(p_data, is_if_block, fun_id); 
 
             }
 
@@ -929,7 +928,7 @@ bool param_list_others(ParserData *p_data, DataType **param_list, int *param_len
                     enum_append(param_list, type, param_len);
                     //fprintf(stderr, "_%d_", *param_list[1]);
                     //GENERATE PARAMETER MAM CISLO PARAMETRA
-                    gen_fun_par(id, index);
+                    gen_fun_par(id, index, 0);
                     return param_list_others(p_data, param_list, param_len, i);
                 case TT_KW_NIL:
                 default:
@@ -989,7 +988,7 @@ bool param_list_func(ParserData *p_data, DataType **param_list, int *param_len){
                     enum_append(param_list, type, param_len);
                     
                     //GENERATE PARAMETER
-                    gen_fun_par(id, i);
+                    gen_fun_par(id, i, 0);
 
                     return param_list_others(p_data, param_list, param_len, &i);
 
@@ -1351,7 +1350,7 @@ bool data_types_list(ParserData *p_data, DataType **param_list, int *param_len){
     return data_types_list_others(p_data, param_list, param_len);
 }
 
-/**
+/**ntf(stderr, "%d", num_error);
  * <body> -> GLOBAL ID : FUNCTION ( <data_types_list> ) <return_types_list> <body>
  */
 bool global(ParserData *p_data)
@@ -1423,7 +1422,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
     int index = *i;
     char *id_name;
     TreeNode *node;
-
+    
     if (token->type == TT_COMMA){
         GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
         switch (token->type)
@@ -1433,12 +1432,12 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
             case TT_INTEGER:
                 type = find_data_type(token->type);
                 //checks type
-                //if (strcmp(func->id, "write")){
-                
-                CHECK_VARS(func->fun_extension->param_type[*i], type, SEM_FUNC_PARAM_RET_ERR);
-                //} else {
-                    //gen_write(token);
-                //}
+                if (!strcmp(func->key, "write")){
+                    gen_write(token, p_data->stack.topIndex);
+                    return function_param_list_others(p_data, global_call, i, func);
+                } else {
+                    CHECK_VARS(func->fun_extension->param_type[*i], type, SEM_FUNC_PARAM_RET_ERR);
+                }
                 
              case TT_KW_NIL:
 
@@ -1457,7 +1456,12 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
                 }
 
                 //checks type
-                CHECK_VARS(func->fun_extension->param_type[*i], node->id, SEM_FUNC_PARAM_RET_ERR);
+                if (!strcmp(func->key, "write")){
+                    gen_write(token , p_data->stack.topIndex);
+                    return function_param_list_others(p_data, global_call, i, func);
+                } else {
+                    CHECK_VARS(func->fun_extension->param_type[*i], node->id, SEM_FUNC_PARAM_RET_ERR);
+                }
 
                 // generate parameter
                 gen_fun_par_to_be_sent(token, index , global_call);
@@ -1471,7 +1475,12 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
         }
 
     } else if (TT_RIGHT_PAR == token->type){
-        
+        //write
+        if ( !strcmp(func->key, "write") ){
+            VYPIS
+            return true;
+        }
+
         if (func->fun_extension->cnt_param_type != *i){
             *i--;
             set_error(5);
@@ -1511,7 +1520,12 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
         case TT_INTEGER:
             //checks type
             
-            CHECK_VARS(func->fun_extension->param_type[i], type, SEM_FUNC_PARAM_RET_ERR);
+            if (!strcmp(func->key, "write")){
+                gen_write(token, p_data->stack.topIndex);
+                return function_param_list_others(p_data, global_call, &i, func);
+            } else {
+                CHECK_VARS(func->fun_extension->param_type[i], type, SEM_FUNC_PARAM_RET_ERR);
+            }
         
         case TT_KW_NIL:
             //GENERATE PARAMETER
@@ -1530,8 +1544,13 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
                 return false;
             }
             //checks type
-            
-            CHECK_VARS(func->fun_extension->param_type[i], node->id, SEM_FUNC_PARAM_RET_ERR);
+            if (!strcmp(func->key, "write")){
+                gen_write(token, p_data->stack.topIndex);
+                return function_param_list_others(p_data, global_call, &i, func);
+                
+            } else {
+                CHECK_VARS(func->fun_extension->param_type[i], node->id, SEM_FUNC_PARAM_RET_ERR);
+            }
 
             // generate parameter
             gen_fun_par_to_be_sent(token, i, global_call);
@@ -1562,6 +1581,7 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     // check if ID of function is in global frame
     if (func == NULL)
     {
+        
         set_error(SEM_UNDEFINED_ERR);
         return false;
     }
@@ -1588,7 +1608,11 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     }
     else if (function_param_list(p_data, global_call, func))
     {
-        gen_fun_call(fun_id, global_call);
+        if (!strcmp(func->key, "write")){
+            
+        } else {
+            gen_fun_call(fun_id, global_call);
+        }
         //GENERATE CALL
         
         return true;
@@ -1601,12 +1625,45 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
 
 
 bool predefined_func(ParserData *p_data){
+    DataType *param_list = NULL;
+    int i = 0;
+    char *id_name;
 
-    if ( bst_insert_fun(p_data->global_frame, "write", 0, NULL, 0, NULL, true) == false){
+    //write
+    id_name = "write";
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 0, param_list, true) == false){
         return false;
-    }
+    } 
+
+    //reads
+    enum_append(&param_list, STR, &i);
+    id_name = "reads";
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1, param_list, true) == false){
+        return false;
+    } 
+
+    //readi
+    free(param_list);
+    param_list = NULL;
+
+    enum_append(&param_list, INT, &i);
+    id_name = "readi";
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1,param_list, true) == false){
+        return false;
+    } 
 
 
+    // readn
+    free(param_list);
+    param_list = NULL;
+
+    enum_append(&param_list, NUM, &i);
+    id_name = "readn";
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1, param_list, true) == false){
+        return false;
+    } 
+
+    return true;
 }
 
 
@@ -1619,7 +1676,6 @@ bool predefined_func(ParserData *p_data){
 
 bool body(ParserData *p_data)
 {   
-    predefined_func(p_data);
 
     Token *token = p_data->token;
 
@@ -1697,6 +1753,10 @@ int syntactic_analyzator()
     if (p_data == NULL)
     {
         return INTERNAL_ERR;
+    }
+
+    if (predefined_func(p_data) == false){
+        return false;
     }
 
     if (program(p_data))

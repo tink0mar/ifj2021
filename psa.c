@@ -940,7 +940,6 @@ DataType psa(ParserData *parser_data){
         }
 
         // Return DataType of the final expression to parser.c
-        fprintf( stderr, "aa %s aa", parser_data->token->attribs.string);
         return stack->content[ stack->top_index ].data_type;
 
     }
