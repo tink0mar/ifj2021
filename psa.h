@@ -13,8 +13,7 @@
 #include "scanner.h"
 #include "symtable.h"
 #include "parser.h"
-// #include "generator.c"
-#include <stdio.h> // REMOVE
+#include "generator.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -132,12 +131,12 @@ PsaStackItem *psa_stack_top(PsaStack *stack);
  */
 PsaStackItem *psa_stack_top_terminal(PsaStack *stack);
 
-PsaStackItem token_to_psa_stack_item(Token *token, SymStack *sym_stack);
-bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, SymStack *sym_stack);
+PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data);
+bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, ParserData *parser_data);
 void psa_modify_top_terminal(PsaStack *stack);
 void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type);
-bool psa_reduce(PsaStack *stack);
+bool psa_reduce(PsaStack *stack, ParserData *parser_data);
 DataType psa(ParserData *parser_data);
-bool psa_condition(ParserData *parser_data, bool its_if)
+bool psa_condition(ParserData *parser_data, bool its_if);
 
 #endif

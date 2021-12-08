@@ -9,6 +9,7 @@
 #include "symtable.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 #include "error.h"
 
@@ -36,10 +37,13 @@ TreeNode *bst_search(TreeNode  *tree, char *key)
 TreeNode *bst_search_in_stack(SymStack *stack, char *key){
     int a = stack->topIndex;
     TreeNode *k;
+    
     while(stack->topIndex != -1)
     {
+       fprintf(stderr, "_%d_", stack->topIndex); 
        TreeNode *tree = sym_stack_top(stack);
        k = bst_search(tree, key);
+       ;
        if(k != NULL)
        {
            stack->topIndex = a;
@@ -89,8 +93,9 @@ bool bst_search_var_in_stack(SymStack *stack, char *key, DataType id){
 }
 
 bool bst_insert(TreeNode **tree, char *key, DataType id) {
+    
     if ((*tree) == NULL) {
-
+        
         (*tree) = malloc(sizeof(TreeNode));
         if ((*tree) == NULL){
             set_error(INTERNAL_ERR);
@@ -110,9 +115,10 @@ bool bst_insert(TreeNode **tree, char *key, DataType id) {
         return false;
 
     } else if (strcmp((*tree)->key,key) > 0) {
+        
         return bst_insert((TreeNode **) &((*tree)->left), key, id);
-
     } else {
+        fprintf(stderr, "b");
         return bst_insert((TreeNode **) &((*tree)->right), key, id);
     }
 }

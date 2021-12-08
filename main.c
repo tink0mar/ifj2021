@@ -12,12 +12,14 @@
 #include <stdbool.h>
 #include "parser.h"
 #include "error.h"
+#include "generator.h"
 
 int main(){
 
     int error = syntactic_analyzator();
-    
+    print_code();
     if (error == 0){
+        
         return 0;
     } else {
         error_mess(error);

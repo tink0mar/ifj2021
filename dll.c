@@ -65,13 +65,15 @@ void dll_set_active_last( DLList *list ) {
     }
 }
 bool dll_is_active_last( DLList *list ) {
-    if(list->firstElement)
-    {
+    if(list->firstElement == NULL) { 
+        return true;
+    }
+
     if(list->activeElement == list->lastElement)
         {
             return true;
         }
-    }
+    
     return false;
 }
 void dll_dispose( DLList *list ) {

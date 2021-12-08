@@ -50,7 +50,7 @@ void error_mess(int num_err){
 }
 
 void set_error(int err){
-
+    fprintf(stderr, "A");
     if (num_error == 0){
         num_error = err;
     }

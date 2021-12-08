@@ -12,7 +12,6 @@
 #include "string.h"
 #include "error.h"
 
-
 #define EOL '\n'
 #define EXPAND_STR if ( expand_string(&(token->attribs.string), c) == 1){ \
                         set_error(INTERNAL_ERR);\

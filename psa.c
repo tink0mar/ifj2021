@@ -8,6 +8,42 @@
  */
 
 #include "psa.h"
+#include "generator.h"
+#include <stdio.h>
+
+void print_psa_stack(PsaStack *stack){
+
+    char *PsaItemTypeStrings[] = {
+        "I_HASHTAG",
+        "I_MUL",
+        "I_DIV",
+        "I_FLOOR_DIV",
+        "I_PLUS",
+        "I_MINUS",
+        "I_CONCAT",
+        "I_ID",
+        "I_INTEGER",
+        "I_NUMBER",
+        "I_STRING",
+        "I_LEFT_PAR",
+        "I_RIGHT_PAR",
+        "I_DOLLAR",
+        "I_EXPR",
+        "I_HANDLE",
+        "I_NULL"
+    };
+
+    if( !psa_stack_is_empty( stack ) ){
+
+        for( int i = 0; i < stack->size; i++ ){
+            fprintf(stderr, "stack[%i] = %s\n", i, PsaItemTypeStrings[ stack->content[i].type] );
+        }
+
+        fprintf(stderr, "\n");
+
+    }
+
+}
 
 // Create an empty token that will be given to items without token
 Token empty_token;
@@ -79,8 +115,8 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
                 set_error( SEM_UNDEFINED_ERR );
 
             }else{
-
-                item.data_type = INT;
+                // why there was INT
+                item.data_type = node->id;
                 item.type = I_ID;
                 break;
 
@@ -106,7 +142,7 @@ bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_t
     psa_stack_push( stack, entry_item->terminal, entry_item->type, entry_item->data_type, entry_item->token_representation );
 
     // Get another token
-    get_token( entry_token );
+    GET_TOKEN(entry_token, parser_data->get_token, &parser_data->dll_list);
 
     // Convert new token to psa stack's item
     *entry_item = token_to_psa_stack_item( entry_token, parser_data );
@@ -255,6 +291,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
             // Generate output code
             gen_push_E( tmp_token, 0 );
+
 
             return true;
 
@@ -431,7 +468,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                 }
 
             }else{
-
+                
                 set_error( SYNTACTIC_ERR );
                 return false;
 
@@ -480,7 +517,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     return true;
 
                 }else{
-
+                    
                     set_error( SYNTACTIC_ERR );
                     return false;
 
@@ -521,7 +558,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             return true;
 
                         }else{
-
+                            
                             set_error( SYNTACTIC_ERR );
                             return false;
 
@@ -537,7 +574,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     }
 
                 }else{
-
+                    
                     set_error( SYNTACTIC_ERR );
                     return false;
 
@@ -578,12 +615,12 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             stack->content[ stack->top_index ].token_representation = empty_token;
 
                             // Generate output code
-                            gen_op_concats();
+                            gen_op_concat();
 
                             return true;
 
                         }else{
-
+                            
                             set_error( SYNTACTIC_ERR );
                             return false;
 
@@ -714,8 +751,6 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
 DataType psa(ParserData *parser_data){
 
-    // NOTE dynamicka kontrola delenia nulou
-
     // INITIALIZE ENVIRONMENT
 
     // Create a stack for PSA
@@ -758,10 +793,12 @@ DataType psa(ParserData *parser_data){
 
     do {
 
+        //print_psa_stack( stack );
+
         if( table[top_terminal->type][entry_item.type] == '>' ){
 
             // REDUCTION
-            if( psa_reduce( stack ) == false ){
+            if( psa_reduce( stack, parser_data ) == false ){
                 break;
             }
 
@@ -786,7 +823,7 @@ DataType psa(ParserData *parser_data){
             }
 
         }else if( table[top_terminal->type][entry_item.type] == 'E' ){
-
+            
             set_error( SYNTACTIC_ERR );
             break;
 
@@ -819,6 +856,7 @@ DataType psa(ParserData *parser_data){
         }
 
         // Return DataType of the final expression to parser.c
+        
         return stack->content[ stack->top_index ].data_type;
 
     }
@@ -838,20 +876,25 @@ bool psa_condition(ParserData *parser_data, bool its_if){
 
     }
 
-    Token condition_operator_token = parser_data->token;
+    Token condition_operator_token = *parser_data->token;
 
     // If token type is in range of condition operators
     // token.type >= TT_GREATER
     // token.type <= TT_EQ
+    fprintf(stderr, "_%d_", condition_operator_token.type);
+
     if( condition_operator_token.type >= TT_GREATER && condition_operator_token.type <= TT_EQ  ){
 
         // e == E
         // Check the E expression
+        GET_TOKEN(parser_data->token, parser_data->get_token, &parser_data->dll_list);
+        GET_TOKEN(parser_data->token, parser_data->get_token, &parser_data->dll_list);
+        fprintf(stderr, "_%d_", parser_data->token->type);
         DataType expr_2_data_type = psa(parser_data);
 
         // Check if there was any error in psa
         if( num_error != 0 ){
-
+            
             return false;
 
         }
@@ -862,7 +905,7 @@ bool psa_condition(ParserData *parser_data, bool its_if){
             set_error( SEM_T_UNCOM_EXPRESS_ERR );
             return false;
 
-        }else if( ( expr_2_data_type == INT || expr_2_data_type == NUM ) && expr_1_data_type == STR ){
+        }else if( ( expr_2_data_type == INT || expr_2_data_type == NUM ) && expr_1_data_type == STR ){
 
             set_error( SEM_T_UNCOM_EXPRESS_ERR );
             return false;
@@ -872,19 +915,19 @@ bool psa_condition(ParserData *parser_data, bool its_if){
         // If its condition for an IF statement
         if( its_if ){
 
-            gen_if( parser_data->stack.top_index, condition_operator_token );
+            gen_if( parser_data->stack.topIndex, condition_operator_token );
 
         // If its condition for a while statement
         }else{
 
-            gen_while( parser_data->stack.top_index, condition_operator_token );
+            gen_while( parser_data->stack.topIndex, condition_operator_token );
 
         }
 
         return true;
 
     }else{
-
+        
         set_error( SYNTACTIC_ERR );
         return false;
 
@@ -892,6 +935,3 @@ bool psa_condition(ParserData *parser_data, bool its_if){
 
 }
 
-int main(){
-
-}

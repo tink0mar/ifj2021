@@ -10,11 +10,9 @@
 #include "psa.h"
 
 PsaStack *psa_stack_create(){
-
     PsaStack *stack = malloc( sizeof( PsaStack ) );
 
-    if( stack == NULL ){
-
+    if ( stack == NULL ) {
         // TODO
 
     }else {

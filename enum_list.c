@@ -13,14 +13,17 @@
 
 bool enum_append(DataType **list, DataType type, int *len){
 
-    DataType *ptr = (DataType *)realloc(*list, sizeof(DataType) * (++*len)); 
+    DataType *ptr = (DataType *)realloc(*list, sizeof(DataType) * (*len + 1)); 
     
     if (ptr == NULL){
         return false;
     } else {
         
         ptr[*len] = type;
+        
         *list = ptr;
+        
+        ++*len;
         return true;
     }
 }

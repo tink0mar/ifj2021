@@ -1,4 +1,11 @@
-
+/**
+ * @file generator.h
+ * @brief Interface of generator.c
+ * @author Denis Adásek Martin Kozák Adam Juliš
+ *
+ * Project: IFJ compiler
+ * Date: 24.11.2021
+ */
 
 #ifndef GENERATOR_H
 #define GENERATOR_H
@@ -6,13 +13,13 @@
 #include <stdio.h>
 #include "parser.h"
 
-
 typedef enum {
     T_LF,
     T_GF,
     T_TF
 } FrameType;
 
+void start();
 void print_code();
 char *get_frame_term_str(Token *token, FrameType frame);
 bool gen_main();
@@ -24,7 +31,7 @@ bool gen_write(Token *token);
 bool gen_tointeger();
 bool gen_ord();
 bool gen_chr();
-bool gen_push_E(Token token);
+bool gen_push_E(Token token, int index);
 bool gen_clears();
 bool gen_op_retype(int i);
 bool gen_zero_check();
@@ -51,11 +58,11 @@ bool gen_move_val_to_ret(int index);
 bool gen_var(char *id, int top_index);
 bool gen_pop_var(char *id, int top_index);
 bool gen_if_label_name(bool else_end, int top_index);
-bool gen_if(int top_index, Token *token);
+bool gen_if(int top_index, Token token);
 bool gen_else(int top_index);
 bool gen_if_end(int top_index);
 bool gen_while_label_name(bool start_end, int top_index);
-bool gen_while(int top_index, Token *token);
+bool gen_while(int top_index, Token token);
 bool gen_while_end(int top_index);
 
 #endif

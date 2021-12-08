@@ -54,8 +54,6 @@ void sym_stack_push( SymStack *stack, TreeNode *root ) {
     } else {
         stack->topIndex++;
         stack->array[stack->topIndex] = root;
-
-
     }
 }
 void sym_stack_dispose( SymStack *stack){

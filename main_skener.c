@@ -59,6 +59,7 @@ int main (){
 
     Token *token = malloc(sizeof(Token));
 
+
     while(1){
         get_token(token);
       
@@ -74,7 +75,6 @@ int main (){
         }
         printf("%s\n", tks[token->type]);
         printf("string: %s\n", token->attribs.string);
-        printf("first:%d second:%f",token->attribs.integer, token->attribs.number);
 
     }
 

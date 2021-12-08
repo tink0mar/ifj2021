@@ -92,12 +92,44 @@ int int_len(int i){
     return len;
 }
 
-int concat_src_int(char **src, int i){
-    int len_i = int_len(i);
-    
+void erase(char **src, int len, int index){
+    for (int i = 0; i < len; i++){
+        (*src)[index + i] = '\0';
+    }
+}
+
+int concat_str_float(char **src, double i){
+    char *ptr;
+    char str[41];
+    sprintf(str, "%a", i);
+
+    int len_str = my_strlen(str);
     int len_src = my_strlen(*src);
     
-    char tmp[41];  
+    if ( *src == NULL ) {
+        ptr = malloc(len_str + 1);
+    } else {
+        ptr = (char *) realloc(*src, len_src + len_str + 1);
+    }
+
+    if (ptr == NULL){
+        return 1;
+    }
+
+    erase(&ptr, len_str, len_src);
+    strcat(ptr,str);
+
+    ptr[len_src + len_str] = '\0';
+    *src = ptr; 
+
+}
+
+int concat_src_int(char **src, int i){
+    int len_i = int_len(i);
+
+    int len_src = my_strlen(*src);
+    
+    char tmp[42];  
     
     sprintf(tmp, "%d", i);
     
@@ -108,18 +140,20 @@ int concat_src_int(char **src, int i){
     }
     
     strcat(*src,tmp);
-
+    
     return 0;
 }
+
+
 
 
 int concat_src_str(char **src, char *str ){
     int len_str = my_strlen(str);
     int len_src = my_strlen(*src);
-    char *ptr;
-
+    char *ptr = NULL;
+    
     if ( *src == NULL ) {
-        ptr = (char *) malloc(len_str + 1);
+        ptr = malloc(len_str + 1);
     } else {
         ptr = (char *) realloc(*src, len_src + len_str + 1);
     }
@@ -128,8 +162,11 @@ int concat_src_str(char **src, char *str ){
         return 1;
     }
 
-    //fprintf(stderr, "%d", len_src + len_str);
+    erase(&ptr, len_str, len_src);
     strcat(ptr,str);
+    //fprintf(stderr, "%d", len_src + len_str);
+    //fprintf(stderr, "%s\n\n\n\n", ptr);
+
     ptr[len_src + len_str] = '\0';
     *src = ptr; 
 
@@ -137,32 +174,42 @@ int concat_src_str(char **src, char *str ){
 }
 
 void print_code(){
-
     printf("%s", code);
     printf("%s", main_code);
     free(code);
     free(main_code);
 }
 
+void start(){
+
+    gen_main();
+    gen_header();
+
+}
+
 char *get_frame_term_str(Token *token, FrameType frame){
     char *ptr = NULL;
+    
     switch(token->type){
-
+        
         case TT_STRING:
             concat_src_str(&ptr, "string@");
+            concat_src_str(&ptr, token->attribs.string);
             break;
         case TT_INTEGER:
             concat_src_str(&ptr, "int@");
+            concat_src_int(&ptr, token->attribs.integer);
             break;
         case TT_NUMBER:
             concat_src_str(&ptr, "float@");
+            concat_str_float(&ptr, token->attribs.number);
             break;
         case TT_IDENTIFIER:
-            concat_src_str(&ptr, id_frame[frame]);
+            concat_src_str(&ptr, "LF@");
             concat_src_str(&ptr, token->attribs.string);
             return ptr;    
     }
-    concat_src_str(&ptr, token->attribs.string);
+    return ptr;
 }
 
 
@@ -174,12 +221,13 @@ char *get_frame_term_str(Token *token, FrameType frame){
 bool gen_main(){
     M_PRTC_N();
     M_PRTC_N();
-    M_PRTC_N("LABEL $main");
+    M_PRTC_N("LABEL $__main");
+    M_PRTC_N();
 }
 
 // generate header of code
 bool gen_header(){
-
+    PRTC_N();
     PRTC_N(".IFJcode21");
     PRTC_N("#autors Denis Adásek, Martin Kozák, Hugo Hežel, Adam Juliš")
     PRTC_N()
@@ -188,11 +236,12 @@ bool gen_header(){
     PRTC_N("DEFVAR GF@\%tmp1")
     PRTC_N("DEFVAR GF@\%tmp2")
     PRTC_N("DEFVAR GF@\%tmp3")
-    PRTC_N("JUMP &main");
+    PRTC_N("JUMP $__main");
     PRTC_N()
-    gen_reads();
-    gen_readn();
-    gen_readi();
+    PRTC_N();
+    //gen_reads();
+    //gen_readn();
+    //gen_readi();
     
 }
 
@@ -299,8 +348,8 @@ bool gen_chr(){
 // generate pushs for psa
 bool gen_push_E(Token token, int index){
     char *term = get_frame_term_str(&token, T_LF);
-
     PRTC("PUSHS ");
+    
     PRTC(term)
     if (token.type == TT_IDENTIFIER){
         PRTC_INT(index)
@@ -319,10 +368,13 @@ bool gen_clears(){
 bool gen_op_retype(int i){
 
     switch(i){
+        case 0:
+            break;
+
         case 1:
-            PRTC_N("POPS GF@tmp1")
+            PRTC_N("POPS GF@\%tmp1")
             PRTC_N("INT2FLOATS")
-            PRTC_N("PUSH GF@tmp1")
+            PRTC_N("PUSHS GF@\%tmp1")
             break;
 
         case 2:
@@ -330,31 +382,34 @@ bool gen_op_retype(int i){
             break;
 
         case 3:
-            PRTC_N("POPS GF@tmp1")
+            PRTC_N("POPS GF@\%tmp1")
             PRTC_N("INT2FLOATS")
-            PRTC_N("PUSH GF@tmp1")
+            PRTC_N("PUSHS GF@\%tmp1")
             PRTC_N("INT2FLOATS")
             break;
+        default: 
+            break;
     }
+    
     return true;
 }
 
 bool gen_zero_check(){
 
-    PRTC_N("POPS GF@tmp1")
-    PRTC_N("POPS GF@tmp2")
-    PRTC_N("EQ GF@tmp3 GF@tmp2 float@0x0p+0");
+    PRTC_N("POPS GF@\%tmp1")
+    PRTC_N("POPS GF@\%tmp2")
+    PRTC_N("EQ GF@\%tmp3 GF@\%tmp2 float@0x0p+0");
     
     PRTC("JUMPIFNEQ LABEL $ok")
     PRTC_INT(zero_cnt)
-    PRTC_N(" GF@tmp3 bool@true")
+    PRTC_N(" GF@\%tmp3 bool@true")
 
     PRTC("LABEL $ok")
     PRTC_INT(zero_cnt)
     PRTC_N()
 
-    PRTC_N("PUSHS GF@tmp1")
-    PRTC_N("PUSHS GF@tmp2")
+    PRTC_N("PUSHS GF@\%tmp1")
+    PRTC_N("PUSHS GF@\%tmp2")
     zero_cnt++;
 }
 
@@ -438,7 +493,7 @@ bool gen_fun_par_to_be_sent(Token *token, int index, bool global){
     if (global){
         char *term = get_frame_term_str(token, T_GF);
         M_PRTC("DEFVAR TF@\%") M_PRTC_INT(index) M_PRTC_N()
-        M_PRTC("MOVE TF@\%") M_PRTC_INT(index) PRTC(" ")  M_PRTC(term) M_PRTC_N()
+        M_PRTC("MOVE TF@\%") M_PRTC_INT(index) M_PRTC(" ")  M_PRTC(term) M_PRTC_N()
         return true;
     } else {
         char *term = get_frame_term_str(token, T_LF);
@@ -451,14 +506,14 @@ bool gen_fun_par_to_be_sent(Token *token, int index, bool global){
 //generate function call global
 bool gen_fun_call(char *fun_id, bool global){
     if (global){
-        PRTC("CALL $")
-        PRTC(fun_id)
-        PRTC_N()
-        return true;
-    } else {
         M_PRTC("CALL $")
         M_PRTC(fun_id)
         M_PRTC_N()
+        return true;
+    } else {
+        PRTC("CALL $")
+        PRTC(fun_id)
+        PRTC_N()
         return true;
     }
 }
@@ -499,9 +554,11 @@ bool gen_fun_par(char *id, int index){
 
     // MOVE LF@id LF@_index_
     PRTC("MOVE LF@")
-    PRTC_INT(index)
+    PRTC(id)
     PRTC(" LF@\%")
     PRTC_INT(index);
+    PRTC_N()
+    PRTC_N()
     return true;
 }
 
@@ -555,7 +612,7 @@ bool gen_var(char *id, int top_index){
 }
 
 bool gen_pop_var(char *id, int top_index){
-    PRTC("POPS ")
+    PRTC("POPS LF@")
     PRTC(id)
     PRTC_INT(top_index)
     PRTC_N()
@@ -580,10 +637,10 @@ bool gen_if_label_name(bool else_end, int top_index){
     }
 }
 
-bool gen_if(int top_index, Token *token){
+bool gen_if(int top_index, Token token){
     PRTC_N()
     PRTC_N("# IF")
-    switch(token->type){
+    switch(token.type){
 
         case TT_GREATER:            // >
             PRTC_N("GTS")
@@ -671,9 +728,19 @@ bool gen_if_end(int top_index){
 
 bool gen_while_label_name(bool start_end, int top_index){
     PRTC("$_")
-    PRTC_INT(top_index)
+
+    //depth
+    if (top_index == 0){
+        PRTC("0")
+    } else {
+        PRTC_INT(top_index);
+    }
+    
+    //width
     PRTC("_")
-    PRTC_INT(label_index[top_index])
+    int i = label_index[top_index];
+    PRTC_INT(i)
+
     PRTC("_")
     if (start_end){
         PRTC("w_start")
@@ -683,7 +750,7 @@ bool gen_while_label_name(bool start_end, int top_index){
 }
 
 
-bool gen_while(int top_index, Token *token){
+bool gen_while(int top_index, Token token){
     PRTC_N()
     PRTC_N("# WHILE")
     
@@ -691,7 +758,7 @@ bool gen_while(int top_index, Token *token){
     gen_while_label_name(true, top_index);
     PRTC_N()
 
-    switch(token->type){
+    switch(token.type){
 
         case TT_GREATER:            // >
             PRTC_N("GTS")
@@ -756,9 +823,8 @@ bool gen_while(int top_index, Token *token){
     }
 }
 
-
 bool gen_while_end(int top_index){
-
+    
     PRTC("JUMP ")
     gen_while_label_name(true, top_index);
     PRTC_N()
@@ -766,24 +832,9 @@ bool gen_while_end(int top_index){
     PRTC("LABEL ")
     gen_while_label_name(false, top_index);
     PRTC_N()
-    
+        
     PRTC_N("#end while")
-    label_index[top_index]++;
-}
-
-
-int main(){
-    Token token;
-
-    token.attribs.string = "aa";
-    token.type = TT_STRING;
-
-    //fprintf(stderr, "%d", TT_STRING);
-    gen_header();
-    gen_main();
     
-    print_code();
-    char *a = NULL;
-
+    label_index[top_index]++;
     
 }
