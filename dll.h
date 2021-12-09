@@ -2,6 +2,7 @@
 #define DLL_H
 #include "scanner.h"
 #include <stdbool.h>
+
 typedef struct DLLElement {
     /** Token. */
     Token *token;
@@ -74,6 +75,7 @@ bool dll_is_active_last( DLList *list );
  */
 void dll_dispose( DLList *list );
 
-Token *dll_return_token( DLList *list );
+void dll_return_token( DLList *list, Token *token );
+void  print_list(DLList *list);
 
 #endif //DLL_H

@@ -70,7 +70,7 @@ char* tokens[] = {
 };
 
 void print(Token *token){
-    fprintf(stderr, "%s\n", tokens[token->type]);
+    //fprintf(stderr, "%s\n", tokens[token->type]);
 
 }
 
@@ -113,7 +113,8 @@ DataType kw_find_data_type(TokenType type){
 void free_resources(ParserData *p_data){
 
     // token
-    free(p_data->token->attribs.string);
+    
+    //free(p_data->token->attribs.string);
     free(p_data->token);
 
     // global frame dispose
@@ -202,7 +203,8 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
 
         // check data types
         if (var->id != func->fun_extension->return_type[count]){
-            set_error(5);
+            fprintf(stderr, "_%d_", func->fun_extension->return_type[count]);
+            set_error(5); fprintf(stderr, "_%d_", __LINE__);
         }
 
         gen_move_ret_to_val(var->key, p_data->stack.topIndex , (pa_stack->topIndex) );
@@ -213,7 +215,7 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
     if (count == func->fun_extension->cnt_return_type){
         return true;
     } else {
-        set_error(5);
+        set_error(5); fprintf(stderr, "_%d_", __LINE__);
         return false;
     }
 
@@ -259,7 +261,7 @@ bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
                         sym_stack_pop(pa_stack);
                         
                         if (type != var->id){
-                            set_error(5);
+                            set_error(5); fprintf(stderr, "_%d_", __LINE__);
                             return false;
                         }
                         //GENERATE POP
@@ -341,7 +343,7 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
         
 
         if (type != var->id){
-            set_error(5);
+            set_error(5); fprintf(stderr, "_%d_", __LINE__);
             
             return false;
         }
@@ -450,7 +452,7 @@ bool return_expr_list_others(ParserData *p_data, TreeNode *func, int *return_len
                     
                     if ( type != func->fun_extension->return_type[*return_len] ){
                         
-                        set_error(5);
+                        set_error(5); fprintf(stderr, "_%d_", __LINE__);
                         return false;
                     }
                     
@@ -522,7 +524,7 @@ bool return_expr_list(ParserData *p_data, char *fun_id){
         case TT_IDENTIFIER:
             
             if (psa(p_data) != func->fun_extension->return_type[return_len] ){
-                set_error(5);
+                set_error(5); fprintf(stderr, "_%d_", __LINE__);
                 
                 return false;
             }
@@ -563,16 +565,21 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
     Token *token = p_data->token;
     GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
     char *id_name;
+    DataType type1;
     
+
     switch (token->type){
         case TT_STRING:
         case TT_INTEGER:
         case TT_NUMBER:
         case TT_HASHTAG:
+        case TT_LEFT_PAR:
             //expression
             
-            if (type != psa(p_data)) {
-                set_error(5);
+            type1 = psa(p_data);
+            if (type != type1) {
+                
+                set_error(5); fprintf(stderr, "_%d_", __LINE__);
                 return false; 
             }
             
@@ -587,9 +594,8 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
         case TT_IDENTIFIER:
             // remember identifier
             id_name = copy_str(token->attribs.string);
-
-            GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
             
+            GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
             if ( token->type == TT_LEFT_PAR ){
                 //CALL FUNCTION
                 bool is_global = false; 
@@ -610,9 +616,10 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
                 
                 if (type != psa(p_data)) {
                     
-                    set_error(5);
+                    set_error(5); fprintf(stderr, "_%d_", __LINE__);
                     return false; 
                 }
+                
                 //GENERATE POP
                 gen_pop_var(var_id, p_data->stack.topIndex);
                 return true;
@@ -752,6 +759,7 @@ bool while_clause(ParserData *p_data, char* fun_id){
  * IF <expression> THEN <block_if> ELSE <block> <END> 
  */
 bool if_clause(ParserData *p_data, char *fun_id) {
+    
     Token *token = p_data->token;
     // IF was read
     // HUGO to potrebuje mat nacitane
@@ -760,11 +768,13 @@ bool if_clause(ParserData *p_data, char *fun_id) {
     // GENEROVANIE PODMIENKY A PRVEHO LABELU
     // true = IF
     NEW_SYMTABLE_FRAME
-
+    
     if (psa_condition(p_data, true) == false){
-        
+        fprintf(stderr, "@ %d @", p_data->token->type);    
         return false;
     }
+    
+    
     
     // check THEN
     
@@ -849,17 +859,19 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
             return while_clause(p_data, fun_id) && block_fwe(p_data, is_if_block, fun_id);
 
         case TT_IDENTIFIER:
+            
             id_name = copy_str(token->attribs.string);
             GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
-            
+            //fprintf(stderr, "@%d_________@", p_data->token->type);
             if (token->type == TT_LEFT_PAR){
                 bool is_global = false; 
+                
                 //FUNCTION CALL // TODO RETURNOVANIE
                 return (function_call(p_data, id_name, false)) && block_fwe(p_data, is_if_block, fun_id);
             } else {
-                 VYPIS
+                
                 UNGET_TOKEN(token)
-
+                
                 // TODO DOUBLE LINKED LIST
                 
 
@@ -1433,7 +1445,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
                 type = find_data_type(token->type);
                 //checks type
                 if (!strcmp(func->key, "write")){
-                    gen_write(token, p_data->stack.topIndex);
+                    gen_write(p_data, p_data->stack.topIndex);
                     return function_param_list_others(p_data, global_call, i, func);
                 } else {
                     CHECK_VARS(func->fun_extension->param_type[*i], type, SEM_FUNC_PARAM_RET_ERR);
@@ -1457,7 +1469,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
 
                 //checks type
                 if (!strcmp(func->key, "write")){
-                    gen_write(token , p_data->stack.topIndex);
+                    gen_write(p_data , p_data->stack.topIndex);
                     return function_param_list_others(p_data, global_call, i, func);
                 } else {
                     CHECK_VARS(func->fun_extension->param_type[*i], node->id, SEM_FUNC_PARAM_RET_ERR);
@@ -1483,7 +1495,7 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
 
         if (func->fun_extension->cnt_param_type != *i){
             *i--;
-            set_error(5);
+            set_error(5); fprintf(stderr, "_%d_", __LINE__);
             return false;
         } else
             return true;
@@ -1521,7 +1533,7 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
             //checks type
             
             if (!strcmp(func->key, "write")){
-                gen_write(token, p_data->stack.topIndex);
+                gen_write(p_data, p_data->stack.topIndex);
                 return function_param_list_others(p_data, global_call, &i, func);
             } else {
                 CHECK_VARS(func->fun_extension->param_type[i], type, SEM_FUNC_PARAM_RET_ERR);
@@ -1545,7 +1557,7 @@ bool function_param_list(ParserData *p_data, bool global_call, TreeNode *func)
             }
             //checks type
             if (!strcmp(func->key, "write")){
-                gen_write(token, p_data->stack.topIndex);
+                gen_write(p_data, p_data->stack.topIndex);
                 return function_param_list_others(p_data, global_call, &i, func);
                 
             } else {
@@ -1598,7 +1610,8 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     {   
         // CALL EMPTY function
         if (func->fun_extension->cnt_param_type != 0){
-            set_error(5);
+            VYPIS
+            set_error(5); fprintf(stderr, "_%d_", __LINE__);
             return false;
         }
 
@@ -1609,7 +1622,7 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     else if (function_param_list(p_data, global_call, func))
     {
         if (!strcmp(func->key, "write")){
-            
+            //
         } else {
             gen_fun_call(fun_id, global_call);
         }
@@ -1631,35 +1644,34 @@ bool predefined_func(ParserData *p_data){
 
     //write
     id_name = "write";
-    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 0, param_list, true) == false){
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 0, NULL, true) == false){
         return false;
     } 
 
     //reads
+    
     enum_append(&param_list, STR, &i);
     id_name = "reads";
-    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1, param_list, true) == false){
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL,  1, param_list, true) == false){
         return false;
     } 
 
     //readi
-    free(param_list);
-    param_list = NULL;
-
-    enum_append(&param_list, INT, &i);
+    DataType *param_list_i = NULL;
+    i = 0;
+    enum_append(&param_list_i, INT, &i);
     id_name = "readi";
-    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1,param_list, true) == false){
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL,  1, param_list_i, true) == false){
         return false;
     } 
 
 
     // readn
-    free(param_list);
-    param_list = NULL;
-
-    enum_append(&param_list, NUM, &i);
+    DataType *param_list_n = NULL;
+    i = 0;
+    enum_append(&param_list_n, NUM, &i);
     id_name = "readn";
-    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL, 1, param_list, true) == false){
+    if ( bst_insert_fun(&p_data->global_frame, id_name, 0, NULL,  1, param_list_n ,true) == false){
         return false;
     } 
 
@@ -1761,13 +1773,13 @@ int syntactic_analyzator()
 
     if (program(p_data))
     {   
-        fprintf(stderr,"\nJE TO V POHODE");
+        //fprintf(stderr,"\nJE TO V POHODE");
         free_resources(p_data);
         return 0;
     }
     else
     {   
-        fprintf(stderr,"\nCHOD DO PICI %d", num_error);
+        //fprintf(stderr,"\nCHOD DO PICI %d", num_error);
         free_resources(p_data);
         return num_error;
     }

@@ -40,7 +40,7 @@ TreeNode *bst_search_in_stack(SymStack *stack, char *key){
     
     while(stack->topIndex != -1)
     {
-       fprintf(stderr, "_%d_", stack->topIndex); 
+       
        TreeNode *tree = sym_stack_top(stack);
        k = bst_search(tree, key);
        ;
@@ -118,7 +118,7 @@ bool bst_insert(TreeNode **tree, char *key, DataType id) {
         
         return bst_insert((TreeNode **) &((*tree)->left), key, id);
     } else {
-        fprintf(stderr, "b");
+        
         return bst_insert((TreeNode **) &((*tree)->right), key, id);
     }
 }
@@ -144,6 +144,7 @@ bool bst_insert_fun(TreeNode  **tree, char *key, int cnt_param_type, DataType *p
         return true;
 
     } else if (!strcmp((*tree)->key,key)) {
+        
         if(is_defined && !(*tree)->fun_extension->is_func_defined)
         {
             int tmp1 = sym_param_comp(cnt_param_type, param_type,(*tree)->fun_extension->cnt_param_type, (*tree)->fun_extension->param_type);

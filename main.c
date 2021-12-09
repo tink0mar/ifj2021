@@ -13,6 +13,7 @@
 #include "parser.h"
 #include "error.h"
 #include "generator.h"
+#include "dll.h"
 
 int main(){
 

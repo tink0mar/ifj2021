@@ -164,9 +164,6 @@ int concat_src_str(char **src, char *str ){
 
     erase(&ptr, len_str, len_src);
     strcat(ptr,str);
-    //fprintf(stderr, "%d", len_src + len_str);
-    //fprintf(stderr, "%s\n\n\n\n", ptr);
-
     ptr[len_src + len_str] = '\0';
     *src = ptr; 
 
@@ -239,9 +236,9 @@ bool gen_header(){
     PRTC_N("JUMP $__main");
     PRTC_N()
     PRTC_N();
-    //gen_reads();
-    //gen_readn();
-    //gen_readi();
+    gen_reads();
+    gen_readn();
+    gen_readi();
     
 }
 
@@ -250,17 +247,17 @@ bool gen_reads(){
     PRTC_N("#READ FUNCION")
     PRTC_N("LABEL $reads");
     PRTC_N("PUSHFRAME");
-    PRTC_N("DEFVAR LF@\%_ret1")
-    PRTC_N("MOVE LF@\%_ret1 nil@nil")
-    PRTC_N("READ LF@\%_ret1")
+    PRTC_N("DEFVAR LF@\%_ret0")
+    PRTC_N("MOVE LF@\%_ret0 nil@nil")
+    PRTC_N("READ LF@\%_ret0 string")
     
-    PRTC_N("DEFVAR LF@\%type")
-    PRTC_N("TYPE LF@\%type LF@\%_ret1")
-    PRTC_N("JUMPIFEQ $ok string LF@\%type")
+    PRTC_N("DEFVAR LF@\%t_s")
+    PRTC_N("TYPE LF@\%t_s LF@\%_ret0")
+    PRTC_N("JUMPIFEQ $ok_s LF@\%t_s LF@\%_ret0")
 
     PRTC_N("EXIT int@4")
 
-    PRTC_N("LABEL $ok")
+    PRTC_N("LABEL $ok_s")
     PRTC_N("POPFRAME")
     PRTC_N("RETURN")
 }
@@ -270,18 +267,17 @@ bool gen_readi(){
     PRTC_N("#READ FUNCION")
     PRTC_N("LABEL $readi");
     PRTC_N("PUSHFRAME");
-    PRTC_N("DEFVAR LF@\%_ret1")
-    PRTC_N("MOVE LF@\%_ret1 nil@nil")
-    PRTC_N("READ LF@\%_ret1")
+    PRTC_N("DEFVAR LF@\%_ret0")
+    PRTC_N("MOVE LF@\%_ret0 nil@nil")
+    PRTC_N("READ LF@\%_ret0 int")
 
-    PRTC_N("DEFVAR LF@\%type")
-    PRTC_N("TYPE LF@\%type LF@\%_ret1")
-    PRTC_N("JUMPIFEQ $ok int LF@\%type")
+    PRTC_N("DEFVAR LF@\%t_i")
+    PRTC_N("MOVE LF@\%t_i int@5")
+    PRTC_N("JUMPIFEQ $ok_i LF@\%t_i LF@\%_ret0")
 
     PRTC_N("EXIT int@4")
 
-    PRTC_N("LABEL $ok")
-
+    PRTC_N("LABEL $ok_i")
     PRTC_N("POPFRAME")
     PRTC_N("RETURN")
 }
@@ -289,33 +285,34 @@ bool gen_readi(){
 bool gen_readn(){
     PRTC_N()
     PRTC_N("#READ FUNCION")
-    PRTC_N("LABEL $reads");
+    PRTC_N("LABEL $readn");
     PRTC_N("PUSHFRAME");
-    PRTC_N("DEFVAR LF@\%_ret1")
-    PRTC_N("MOVE LF@\%_ret1 nil@nil")
-    PRTC_N("READ LF@\%_ret1")
+    PRTC_N("DEFVAR LF@\%_ret0")
+    PRTC_N("MOVE LF@\%_ret0 nil@nil")
+    PRTC_N("READ LF@\%_ret0 float")
 
-    PRTC_N("DEFVAR LF@\%type")
-    PRTC_N("TYPE LF@\%type LF@\%_ret1")
-    PRTC_N("JUMPIFEQ $ok float LF@\%type")
+    PRTC_N("DEFVAR LF@\%t_n")
+    PRTC_N("MOVE LF@\%t_n float@0x0p+0")
+    PRTC_N("JUMPIFEQ $ok_n LF@\%t_n LF@\%_ret0 ")
 
     PRTC_N("EXIT int@4")
 
-    PRTC_N("LABEL $ok")
+    PRTC_N("LABEL $ok_n")
 
     PRTC_N("POPFRAME")
     PRTC_N("RETURN")
     PRTC_N()
 }
 
-bool gen_write(Token *token, int topindex){
+bool gen_write(ParserData *p_data, int topindex){
 
     PRTC("WRITE ")
-    char *ptr = get_frame_term_str(token, T_LF);
+    char *ptr = get_frame_term_str(p_data->token, T_LF);
     PRTC(ptr)
 
-    if (token->type == TT_IDENTIFIER){
-        PRTC_INT(topindex)
+    if (p_data->token->type == TT_IDENTIFIER){
+        int index = bst_search_in_stack_gen(&p_data->stack, p_data->token->attribs.string);
+        PRTC_INT(index)
     }
 
     PRTC_N()
@@ -352,7 +349,7 @@ bool gen_chr(){
 // GENERATE CODE FOR PSA 
 
 // generate pushs for psa
-bool gen_push_E(Token token, int index){
+bool gen_push_E(Token token, int index, char **str){
     char *term = get_frame_term_str(&token, T_LF);
     PRTC("PUSHS ");
     
@@ -406,9 +403,11 @@ bool gen_zero_check(){
     PRTC_N("POPS GF@\%tmp2")
     PRTC_N("EQ GF@\%tmp3 GF@\%tmp2 float@0x0p+0");
     
-    PRTC("JUMPIFNEQ LABEL $ok")
+    PRTC("JUMPIFEQ $ok")
     PRTC_INT(zero_cnt)
     PRTC_N(" GF@\%tmp3 bool@true")
+
+    PRTC_N("EXIT int@9")
 
     PRTC("LABEL $ok")
     PRTC_INT(zero_cnt)
@@ -444,7 +443,7 @@ bool gen_op_muls(int i){
 bool gen_op_divs(int i){
     if (!gen_op_retype(i)){ return false;}
     gen_zero_check();
-    PRTC_N("DIV")
+    PRTC_N("DIVS")
     return true;
 }
 
@@ -452,7 +451,7 @@ bool gen_op_divs(int i){
 bool gen_op_idivs(int i){
     if (!gen_op_retype(i)){ return false;}
     gen_zero_check();
-    PRTC_N("IDIV")
+    PRTC_N("IDIVS")
     return true;
 }
 
@@ -673,8 +672,8 @@ bool gen_if(int top_index, Token token){
 
             PRTC_N("POPS GF@\%swap1")
             PRTC_N("POPS GF@\%swap2")
-            PRTC_N("PUSH GF@\%swap1")
-            PRTC_N("PUSH GF@\%swap2")
+            PRTC_N("PUSHS GF@\%swap1")
+            PRTC_N("PUSHS GF@\%swap2")
 
             PRTC_N("LTS")
             PRTC_N("PUSHS bool@false")
@@ -686,8 +685,8 @@ bool gen_if(int top_index, Token token){
         case TT_LESS_OR_EQ:
             PRTC_N("POPS GF@\%swap1")
             PRTC_N("POPS GF@\%swap2")
-            PRTC_N("PUSH GF@\%swap1")
-            PRTC_N("PUSH GF@\%swap2")
+            PRTC_N("PUSHS GF@\%swap1")
+            PRTC_N("PUSHS GF@\%swap2")
 
             PRTC_N("GTS")
             PRTC_N("PUSHS bool@false")
