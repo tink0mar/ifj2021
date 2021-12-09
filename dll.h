@@ -1,3 +1,12 @@
+/**
+ * @file dll.h
+ * @brief Header file for DLL
+ * @author Denis Adásek
+ * 
+ * Project: IFJ compiler
+ * Date: 3.12.2021
+ */ 
+
 #ifndef DLL_H
 #define DLL_H
 #include "scanner.h"

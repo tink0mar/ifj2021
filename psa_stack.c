@@ -98,7 +98,7 @@ bool psa_stack_is_empty(PsaStack *stack){
 
 }
 
-void psa_stack_push(PsaStack *stack, bool terminal, PsaItemType type, DataType data_type, Token *token_representation){
+void psa_stack_push(PsaStack *stack, bool terminal, PsaItemType type, DataType data_type, Token token_representation){
 
     stack->top_index++;
     stack->size++;

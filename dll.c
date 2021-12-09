@@ -1,3 +1,12 @@
+/**
+ * @file dll.c
+ * @brief Implementation of DLL
+ * @author Denis Adásek
+ * 
+ * Project: IFJ compiler
+ * Date: 3.12.2021
+ */ 
+
 #include "dll.h"
 #include <stdio.h>
 #include <malloc.h>
