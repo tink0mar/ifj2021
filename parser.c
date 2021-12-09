@@ -172,9 +172,6 @@ char * copy_str(char *src){
  * @brief Function first checks if variable is in symtable,
  *        then insert variable to stack of variables, with 
  *        data_type
- * 
- * @param p_data 
- * @param id  
  */
 
 bool insert_var_to_stack(ParserData *p_data, SymStack *pa_stack, char *id){
@@ -199,12 +196,10 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
     while(pa_stack->topIndex != -1){
         var = sym_stack_top(pa_stack);
         int deep = bst_search_in_stack_gen(pa_stack, var->key);
-        //generate pop
 
         // check data types
         if (var->id != func->fun_extension->return_type[count]){
-            fprintf(stderr, "_%d_", func->fun_extension->return_type[count]);
-            set_error(5); fprintf(stderr, "_%d_", __LINE__);
+            set_error(5); 
         }
 
         gen_move_ret_to_val(var->key, p_data->stack.topIndex , (pa_stack->topIndex) );
@@ -212,10 +207,10 @@ bool assign_return(ParserData *p_data, SymStack *pa_stack, char *func_id){
         count++;
     }
 
-    if (count == func->fun_extension->cnt_return_type){
+    if (count <= func->fun_extension->cnt_return_type){
         return true;
     } else {
-        set_error(5); fprintf(stderr, "_%d_", __LINE__);
+        set_error(5);
         return false;
     }
 
@@ -261,7 +256,7 @@ bool expression_list_others(ParserData *p_data, SymStack *pa_stack){
                         sym_stack_pop(pa_stack);
                         
                         if (type != var->id){
-                            set_error(5); fprintf(stderr, "_%d_", __LINE__);
+                            set_error(5);
                             return false;
                         }
                         //GENERATE POP
@@ -314,7 +309,6 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
 
             } else { 
                 UNGET_TOKEN(token)
-
                 break;
             }
 
@@ -340,10 +334,8 @@ bool expression_list_and_func(ParserData *p_data, SymStack *pa_stack){
         TreeNode *var = sym_stack_top(pa_stack);
         sym_stack_pop(pa_stack);
         //
-        
-
         if (type != var->id){
-            set_error(5); fprintf(stderr, "_%d_", __LINE__);
+            set_error(5);
             
             return false;
         }
@@ -452,7 +444,7 @@ bool return_expr_list_others(ParserData *p_data, TreeNode *func, int *return_len
                     
                     if ( type != func->fun_extension->return_type[*return_len] ){
                         
-                        set_error(5); fprintf(stderr, "_%d_", __LINE__);
+                        set_error(5); 
                         return false;
                     }
                     
@@ -524,7 +516,7 @@ bool return_expr_list(ParserData *p_data, char *fun_id){
         case TT_IDENTIFIER:
             
             if (psa(p_data) != func->fun_extension->return_type[return_len] ){
-                set_error(5); fprintf(stderr, "_%d_", __LINE__);
+                set_error(5); 
                 
                 return false;
             }
@@ -579,7 +571,7 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
             type1 = psa(p_data);
             if (type != type1) {
                 
-                set_error(5); fprintf(stderr, "_%d_", __LINE__);
+                set_error(5); 
                 return false; 
             }
             
@@ -616,7 +608,7 @@ bool local_expr_2(ParserData *p_data, char *var_id, DataType type){
                 
                 if (type != psa(p_data)) {
                     
-                    set_error(5); fprintf(stderr, "_%d_", __LINE__);
+                    set_error(5); 
                     return false; 
                 }
                 
@@ -770,7 +762,7 @@ bool if_clause(ParserData *p_data, char *fun_id) {
     NEW_SYMTABLE_FRAME
     
     if (psa_condition(p_data, true) == false){
-        fprintf(stderr, "@ %d @", p_data->token->type);    
+            
         return false;
     }
     
@@ -862,7 +854,6 @@ bool block_fwe(ParserData *p_data, bool is_if_block, char *fun_id){
             
             id_name = copy_str(token->attribs.string);
             GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
-            //fprintf(stderr, "@%d_________@", p_data->token->type);
             if (token->type == TT_LEFT_PAR){
                 bool is_global = false; 
                 
@@ -936,9 +927,7 @@ bool param_list_others(ParserData *p_data, DataType **param_list, int *param_len
                     
                     INSERT_VAR_TO_SYM(id, type);
                     
-                    //fprintf(stderr, "%d",p_data->stack.topIndex);
                     enum_append(param_list, type, param_len);
-                    //fprintf(stderr, "_%d_", *param_list[1]);
                     //GENERATE PARAMETER MAM CISLO PARAMETRA
                     gen_fun_par(id, index, 0);
                     return param_list_others(p_data, param_list, param_len, i);
@@ -1410,8 +1399,6 @@ bool global(ParserData *p_data)
                 
                 bool flag = bst_insert_fun(&(p_data->global_frame), fun_id, param_len, param_list, return_len, return_list, false);
                 
-                //fprintf(stderr, "_%s_", (p_data->global_frame)->key);
-                
                 return flag;
             }
             else {
@@ -1489,13 +1476,12 @@ bool function_param_list_others(ParserData *p_data, bool global_call, int *i, Tr
     } else if (TT_RIGHT_PAR == token->type){
         //write
         if ( !strcmp(func->key, "write") ){
-            VYPIS
             return true;
         }
 
         if (func->fun_extension->cnt_param_type != *i){
             *i--;
-            set_error(5); fprintf(stderr, "_%d_", __LINE__);
+            set_error(5);
             return false;
         } else
             return true;
@@ -1610,8 +1596,7 @@ bool function_call(ParserData *p_data,char *fun_id ,bool global_call)
     {   
         // CALL EMPTY function
         if (func->fun_extension->cnt_param_type != 0){
-            VYPIS
-            set_error(5); fprintf(stderr, "_%d_", __LINE__);
+            set_error(5);
             return false;
         }
 
@@ -1690,7 +1675,6 @@ bool body(ParserData *p_data)
 {   
 
     Token *token = p_data->token;
-
     GET_TOKEN(token, p_data->get_token, &(p_data->dll_list));
     char *fun_id;
     // eps
@@ -1773,13 +1757,11 @@ int syntactic_analyzator()
 
     if (program(p_data))
     {   
-        //fprintf(stderr,"\nJE TO V POHODE");
         free_resources(p_data);
         return 0;
     }
     else
     {   
-        //fprintf(stderr,"\nCHOD DO PICI %d", num_error);
         free_resources(p_data);
         return num_error;
     }

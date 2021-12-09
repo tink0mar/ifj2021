@@ -55,7 +55,7 @@ typedef struct {
     bool terminal;                  // terminal or noterminal
     PsaItemType type;               // Type of psa item
     DataType data_type;             // Data type of psa item ( string, number, integer or nil )
-    Token *token_representation;    // Token that can be represented by this psa item if its terminal
+    Token token_representation;    // Token that can be represented by this psa item if its terminal
 } PsaStackItem;
 
 /**
@@ -108,7 +108,7 @@ bool psa_stack_is_empty(PsaStack *stack);
  * @param stack The stack
  * @return
  */
-void psa_stack_push(PsaStack *stack, bool terminal, PsaItemType type, DataType data_type, Token *token_representation);
+void psa_stack_push(PsaStack *stack, bool terminal, PsaItemType type, DataType data_type, Token token_representation);
 
 /**
  * @brief Pop an item from stack

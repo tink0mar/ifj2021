@@ -17,75 +17,8 @@
     dll_set_active_previous(&parser_data->dll_list);\
     dll_return_token(&parser_data->dll_list, parser_data->token );\
 
-char *PsaItemTypeStrings[] = {
-        "I_HASHTAG",
-        "I_MUL",
-        "I_DIV",
-        "I_FLOOR_DIV",
-        "I_PLUS",
-        "I_MINUS",
-        "I_CONCAT",
-        "I_ID",
-        "I_INTEGER",
-        "I_NUMBER",
-        "I_STRING",
-        "I_LEFT_PAR",
-        "I_RIGHT_PAR",
-        "I_DOLLAR",
-        "I_EXPR",
-        "I_HANDLE",
-        "I_NULL"
-    };
-
-void print_psa_stack(PsaStack *stack){
-
-    if( !psa_stack_is_empty( stack ) ){
-
-        for( int i = 0; i < stack->size; i++ ){
-            fprintf(stderr, "stack[%i] = %s\n", i, PsaItemTypeStrings[ stack->content[i].type] );
-        }
-
-        fprintf(stderr, "\n");
-
-    }
-
-}
-
 // Create an empty token that will be given to items without token
 Token empty_token;
-
-Token *save_token_into_item(ParserData *parser_data){
-
-    Token *token_representation = malloc( sizeof( Token ) );
-
-    if( token_representation == NULL ){
-
-        return NULL;        
-
-    }else{
-
-        char *ptr;
-
-        if (token_representation->attribs.string == NULL) {
-
-            fprintf(stderr, "Token string: %s\n", parser_data->token->attribs.string);
-
-            ptr = copy_str(parser_data->token->attribs.string);
-            token_representation->attribs.string = ptr;
-
-            fprintf(stderr, "Item string: %s\n", token_representation->attribs.string);
-
-        }
-        
-        token_representation->type = parser_data->token->type;       
-        token_representation->attribs.number = parser_data->token->attribs.number;
-        token_representation->attribs.integer = parser_data->token->attribs.integer;
-
-        return token_representation;
-
-    }
-
-}
 
 PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
     PsaStackItem item;
@@ -144,7 +77,6 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
             break;
         case TT_IDENTIFIER:
             
-            //fprintf(stderr, "ID ENTRY TOKEN %d\n", parser_data->token->type);
 
             // Load the next token
             // Copied GET_TOKEN macro because of the return inside it
@@ -198,21 +130,12 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
                 dll_return_token( &parser_data->dll_list, parser_data->token );
             }           
 
-            //fprintf(stderr, "ID ENTRY->NEXT TOKEN %d\n", parser_data->token->type);
-
-            //if( dll_is_active_last( &parser_data->dll_list) ){fprintf(stderr,"LAST = ACTIVE\n");}
-            //fprintf(stderr, "LAST ITEM - %d\n", parser_data->dll_list.lastElement->token->type);
-            //fprintf(stderr, "ACTIVE ITEM - %d\n", parser_data->dll_list.activeElement->token->type);
-            //print_list(&parser_data->dll_list);
-
             // Check whether the next token is "=" or ","
             if( parser_data->token->type == TT_ASSIGN || parser_data->token->type == TT_COMMA || parser_data->token->type == TT_LEFT_PAR ){
 
                 // Unget the next token
                 UNGET_TOKEN_PSA
                 UNGET_TOKEN_PSA
-                
-                //fprintf(stderr, "ID ENTRY->UNGETN TOKEN %d\n", parser_data->token->type);
 
                 // Set the current ID token as dollar - expression ending item
                 item.data_type = NOTHING;
@@ -228,10 +151,9 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
 
                 // Search in symtable for id's type
                 node = bst_search_in_stack( &parser_data->stack, parser_data->token->attribs.string );
-                fprintf(stderr, "@_ %d @_", token->type);
-                print_list(&parser_data->dll_list);
+
                 if( node == NULL ){
-                    fprintf(stderr, "@ kokot @"); //parser_data->token->type)
+
                     // Node wasn't found in symtable => undefined identifier
                     set_error( SEM_UNDEFINED_ERR );
                     return item;
@@ -255,20 +177,8 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
     }
 
     item.terminal = true;
-    item.token_representation = save_token_into_item( parser_data );
-
-    fprintf(stderr, "Item string: %s\n", item.token_representation->attribs.string);
+    item.token_representation = *parser_data->token;
     
-    
-    /**
-    item.token_representation.type = parser_data->token->type;
-    item.token_representation.attribs.integer = parser_data->token->attribs.integer;
-    item.token_representation.attribs.number = parser_data->token->attribs.number;
-    ptr = copy_str(parser_data->token->attribs.string);
-    fprintf( stderr, "_%s_", ptr);
-    item.token_representation.attribs.string = ptr;
-    */
-    // fprintf(stderr, "RETURNING ITEM %d\n", item.type);
 
     return item;
 
@@ -306,8 +216,6 @@ bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_t
         dll_return_token( &parser_data->dll_list, parser_data->token );
     }
 
-   // fprintf(stderr, "\n ENTERING CONVERT FUNCTION WITH TokenType = %i\n", parser_data->token->type);
-
     // Convert new token to psa stack's item
    
     
@@ -335,7 +243,7 @@ void psa_modify_top_terminal(PsaStack *stack){
     if( item == psa_stack_top( stack ) ){
         
         // Just push the handle item
-        psa_stack_push( stack, false, I_HANDLE, NOTHING, NULL);
+        psa_stack_push( stack, false, I_HANDLE, NOTHING, empty_token);
         
     }else {
 
@@ -346,7 +254,7 @@ void psa_modify_top_terminal(PsaStack *stack){
         item[1].terminal = false;
         item[1].type = I_HANDLE;
         item[1].data_type = NOTHING;
-        item[1].token_representation = NULL;
+        item[1].token_representation = empty_token;
 
         
 
@@ -409,11 +317,17 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
     // <id
     if( top_item_type == I_ID ){
+        char *ptr;
         
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
-        Token *tmp_token = stack->content[ stack->top_index ].token_representation;
-        
+        Token tmp_token;
+        tmp_token.attribs.integer = stack->content[ stack->top_index ].token_representation.attribs.integer ;
+        tmp_token.attribs.number = stack->content[ stack->top_index ].token_representation.attribs.number ;
+        tmp_token.type = stack->content[ stack->top_index ].token_representation.type;
+
+        tmp_token.attribs.string = stack->content[ stack->top_index ].token_representation.attribs.string;
+
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
 
@@ -426,11 +340,11 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
             stack->content[ stack->top_index ].data_type = tmp_data_type;
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
-            int index = bst_search_in_stack_gen( &(parser_data->stack), tmp_token->attribs.string );
+            int index = bst_search_in_stack_gen( &(parser_data->stack), tmp_token.attribs.string );
 
             // Generate output code
             
-            gen_push_E( *tmp_token, index, &tmp_token->attribs.string);
+            gen_push_E( tmp_token, index, &tmp_token.attribs.string);
 
             return true;
 
@@ -444,8 +358,17 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
     }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
 
         // Save the id's ( top item's ) data_type and token
+        char *ptr;
+        // Save the id's ( top item's ) data_type and token
+        
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
-        Token *tmp_token = stack->content[ stack->top_index ].token_representation;
+        Token tmp_token;
+        tmp_token.attribs.integer = stack->content[ stack->top_index ].token_representation.attribs.integer ;
+        tmp_token.attribs.number = stack->content[ stack->top_index ].token_representation.attribs.number ;
+        tmp_token.type = stack->content[ stack->top_index ].token_representation.type;
+        tmp_token.attribs.string = stack->content[ stack->top_index ].token_representation.attribs.string;
+
+        
 
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
@@ -460,10 +383,8 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
             // Generate output code
-
-            fprintf(stderr, "STRING: %s\n",tmp_token->attribs.string);
-
-            gen_push_E( *tmp_token, 0, &tmp_token->attribs.string);
+           
+            gen_push_E( tmp_token, 0,  &tmp_token.attribs.string);
 
             return true;
 
@@ -627,7 +548,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
                         }
 
-                        stack->content[ stack->top_index ].token_representation = NULL;
+                        stack->content[ stack->top_index ].token_representation = empty_token;
 
                         return true;
 
@@ -668,7 +589,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = NUM;
-                    stack->content[ stack->top_index ].token_representation = NULL;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
 
                     if( expr_1_data_type == INT && expr_2_data_type == INT ){
 
@@ -728,7 +649,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             stack->content[ stack->top_index ].terminal = false;
                             stack->content[ stack->top_index ].type = I_EXPR;
                             stack->content[ stack->top_index ].data_type = NUM;
-                            stack->content[ stack->top_index ].token_representation = NULL;
+                            stack->content[ stack->top_index ].token_representation = empty_token;
 
                             // Generate output code
                             gen_op_idivs( 3 );
@@ -790,7 +711,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             stack->content[ stack->top_index ].terminal = false;
                             stack->content[ stack->top_index ].type = I_EXPR;
                             stack->content[ stack->top_index ].data_type = STR;
-                            stack->content[ stack->top_index ].token_representation = NULL;
+                            stack->content[ stack->top_index ].token_representation = empty_token;
 
                             // Generate output code
                             gen_op_concat();
@@ -841,7 +762,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = INT;
-                    stack->content[ stack->top_index ].token_representation = NULL;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
 
                     // Generate output code
                     gen_op_hashtag();
@@ -893,7 +814,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = tmp_data_type;
-                    stack->content[ stack->top_index ].token_representation = NULL;
+                    stack->content[ stack->top_index ].token_representation = empty_token;
 
                     return true;
 
@@ -935,7 +856,7 @@ DataType psa(ParserData *parser_data){
     PsaStack *stack = psa_stack_create();
 
     // Vlož "$" na zásobník
-    psa_stack_push( stack, true, I_DOLLAR, NIL, NULL );
+    psa_stack_push( stack, true, I_DOLLAR, NIL, empty_token );
 
     // Create table for the psa
     char table[TABLE_SIZE][TABLE_SIZE] = {
@@ -971,12 +892,7 @@ DataType psa(ParserData *parser_data){
 
     do {
 
-        //fprintf(stderr, "ITEM NA VSTUPU: %s\n", PsaItemTypeStrings[entry_item.type]);
-        print_psa_stack( stack );
-
         if( table[top_terminal->type][entry_item.type] == '>' ){
-
-            //fprintf(stderr, "REDUCE entry_item = %i\n", entry_item.type);
 
             // REDUCTION
             if( psa_reduce( stack, parser_data ) == false ){
@@ -1006,8 +922,6 @@ DataType psa(ParserData *parser_data){
 
         }else if( table[top_terminal->type][entry_item.type] == 'E' ){
 
-            //fprintf(stderr, "TOP_TERMINAL %d VSTUP %d", top_terminal->type, entry_item.type);
-
             set_error( SYNTACTIC_ERR );
             break;
 
@@ -1022,8 +936,6 @@ DataType psa(ParserData *parser_data){
         top_terminal = psa_stack_top_terminal( stack );
 
     } while ( entry_item.type != I_DOLLAR || top_terminal->type != I_DOLLAR );
-
-    print_psa_stack( stack );
 
     // If for some reason the stack is NULL
     if( stack == NULL ){
@@ -1149,4 +1061,3 @@ bool psa_condition(ParserData *parser_data, bool its_if){
     }
 
 }
-

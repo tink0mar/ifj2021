@@ -18,9 +18,9 @@
 int main(){
 
     int error = syntactic_analyzator();
-    print_code();
+    
     if (error == 0){
-        
+        print_code();
         return 0;
     } else {
         error_mess(error);
