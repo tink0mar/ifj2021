@@ -1,6 +1,6 @@
 /**
- * @file symtable.c
- * @brief Symtable for ifj compiler
+ * @file stack.c
+ * @brief Stack for symtable frames
  * @author Denis Adásek
  *
  * Project: IFJ compiler
