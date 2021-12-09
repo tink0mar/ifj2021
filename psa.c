@@ -54,12 +54,45 @@ void print_psa_stack(PsaStack *stack){
 // Create an empty token that will be given to items without token
 Token empty_token;
 
+Token *save_token_into_item(ParserData *parser_data){
+
+    Token *token_representation = malloc( sizeof( Token ) );
+
+    if( token_representation == NULL ){
+
+        return NULL;        
+
+    }else{
+
+        char *ptr;
+
+        if (token_representation->attribs.string == NULL) {
+
+            fprintf(stderr, "Token string: %s\n", parser_data->token->attribs.string);
+
+            ptr = copy_str(parser_data->token->attribs.string);
+            token_representation->attribs.string = ptr;
+
+            fprintf(stderr, "Item string: %s\n", token_representation->attribs.string);
+
+        }
+        
+        token_representation->type = parser_data->token->type;       
+        token_representation->attribs.number = parser_data->token->attribs.number;
+        token_representation->attribs.integer = parser_data->token->attribs.integer;
+
+        return token_representation;
+
+    }
+
+}
+
 PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
     PsaStackItem item;
 
     // Declare node value that will be used in switch's case - TT_IDENTIFIER
     TreeNode *node;
-    fprintf(stderr, "@ %d @", parser_data->token->type);
+
     switch ( parser_data->token->type ) {
         case TT_PLUS:
             item.data_type = NOTHING;
@@ -222,7 +255,9 @@ PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data){
     }
 
     item.terminal = true;
-    item.token_representation = *parser_data->token;
+    item.token_representation = save_token_into_item( parser_data );
+
+    fprintf(stderr, "Item string: %s\n", item.token_representation->attribs.string);
     
     
     /**
@@ -300,7 +335,7 @@ void psa_modify_top_terminal(PsaStack *stack){
     if( item == psa_stack_top( stack ) ){
         
         // Just push the handle item
-        psa_stack_push( stack, false, I_HANDLE, NOTHING, empty_token);
+        psa_stack_push( stack, false, I_HANDLE, NOTHING, NULL);
         
     }else {
 
@@ -311,7 +346,7 @@ void psa_modify_top_terminal(PsaStack *stack){
         item[1].terminal = false;
         item[1].type = I_HANDLE;
         item[1].data_type = NOTHING;
-        item[1].token_representation = empty_token;
+        item[1].token_representation = NULL;
 
         
 
@@ -374,17 +409,11 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
     // <id
     if( top_item_type == I_ID ){
-        char *ptr;
         
         // Save the id's ( top item's ) data_type and token
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
-        Token tmp_token;
-        tmp_token.attribs.integer = stack->content[ stack->top_index ].token_representation.attribs.integer ;
-        tmp_token.attribs.number = stack->content[ stack->top_index ].token_representation.attribs.number ;
-        tmp_token.type = stack->content[ stack->top_index ].token_representation.type;
-
-        tmp_token.attribs.string = stack->content[ stack->top_index ].token_representation.attribs.string;
-        fprintf( stderr, "aaaa");
+        Token *tmp_token = stack->content[ stack->top_index ].token_representation;
+        
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
 
@@ -397,11 +426,11 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
             stack->content[ stack->top_index ].data_type = tmp_data_type;
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
-            int index = bst_search_in_stack_gen( &(parser_data->stack), tmp_token.attribs.string );
+            int index = bst_search_in_stack_gen( &(parser_data->stack), tmp_token->attribs.string );
 
             // Generate output code
             
-            gen_push_E( tmp_token, index, &tmp_token.attribs.string);
+            gen_push_E( *tmp_token, index, &tmp_token->attribs.string);
 
             return true;
 
@@ -415,17 +444,8 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
     }else if( top_item_type == I_NUMBER || top_item_type == I_INTEGER || top_item_type == I_STRING ){
 
         // Save the id's ( top item's ) data_type and token
-        char *ptr;
-        // Save the id's ( top item's ) data_type and token
-        
         DataType tmp_data_type = stack->content[ stack->top_index ].data_type;
-        Token tmp_token;
-        tmp_token.attribs.integer = stack->content[ stack->top_index ].token_representation.attribs.integer ;
-        tmp_token.attribs.number = stack->content[ stack->top_index ].token_representation.attribs.number ;
-        tmp_token.type = stack->content[ stack->top_index ].token_representation.type;
-        tmp_token.attribs.string = stack->content[ stack->top_index ].token_representation.attribs.string;
-
-        
+        Token *tmp_token = stack->content[ stack->top_index ].token_representation;
 
         // Pop and update top_item_type
         psa_reduce_pop_and_update( stack, &top_item_type );
@@ -437,12 +457,13 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
             stack->content[ stack->top_index ].terminal = false;
             stack->content[ stack->top_index ].type = I_EXPR;
             stack->content[ stack->top_index ].data_type = tmp_data_type;
-            //fprintf(stderr, "\nPSA DEBUG\n DataType of integer = %d \n\n", tmp_data_type);
             stack->content[ stack->top_index ].token_representation = tmp_token;
 
             // Generate output code
-           
-            gen_push_E( tmp_token, 0,  &tmp_token.attribs.string);
+
+            fprintf(stderr, "STRING: %s\n",tmp_token->attribs.string);
+
+            gen_push_E( *tmp_token, 0, &tmp_token->attribs.string);
 
             return true;
 
@@ -606,7 +627,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
 
                         }
 
-                        stack->content[ stack->top_index ].token_representation = empty_token;
+                        stack->content[ stack->top_index ].token_representation = NULL;
 
                         return true;
 
@@ -647,7 +668,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = NUM;
-                    stack->content[ stack->top_index ].token_representation = empty_token;
+                    stack->content[ stack->top_index ].token_representation = NULL;
 
                     if( expr_1_data_type == INT && expr_2_data_type == INT ){
 
@@ -707,7 +728,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             stack->content[ stack->top_index ].terminal = false;
                             stack->content[ stack->top_index ].type = I_EXPR;
                             stack->content[ stack->top_index ].data_type = NUM;
-                            stack->content[ stack->top_index ].token_representation = empty_token;
+                            stack->content[ stack->top_index ].token_representation = NULL;
 
                             // Generate output code
                             gen_op_idivs( 3 );
@@ -769,7 +790,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                             stack->content[ stack->top_index ].terminal = false;
                             stack->content[ stack->top_index ].type = I_EXPR;
                             stack->content[ stack->top_index ].data_type = STR;
-                            stack->content[ stack->top_index ].token_representation = empty_token;
+                            stack->content[ stack->top_index ].token_representation = NULL;
 
                             // Generate output code
                             gen_op_concat();
@@ -820,7 +841,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = INT;
-                    stack->content[ stack->top_index ].token_representation = empty_token;
+                    stack->content[ stack->top_index ].token_representation = NULL;
 
                     // Generate output code
                     gen_op_hashtag();
@@ -872,7 +893,7 @@ bool psa_reduce(PsaStack *stack, ParserData *parser_data){
                     stack->content[ stack->top_index ].terminal = false;
                     stack->content[ stack->top_index ].type = I_EXPR;
                     stack->content[ stack->top_index ].data_type = tmp_data_type;
-                    stack->content[ stack->top_index ].token_representation = empty_token;
+                    stack->content[ stack->top_index ].token_representation = NULL;
 
                     return true;
 
@@ -914,7 +935,7 @@ DataType psa(ParserData *parser_data){
     PsaStack *stack = psa_stack_create();
 
     // Vlož "$" na zásobník
-    psa_stack_push( stack, true, I_DOLLAR, NIL, empty_token );
+    psa_stack_push( stack, true, I_DOLLAR, NIL, NULL );
 
     // Create table for the psa
     char table[TABLE_SIZE][TABLE_SIZE] = {
