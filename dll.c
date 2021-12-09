@@ -104,6 +104,9 @@ void dll_dispose( DLList *list ) {
     while( elemPtr != NULL)
     {
         list->firstElement = list->firstElement->nextElement;
+
+        free(elemPtr->token);
+        free(elemPtr->token->attribs.string);
         free(elemPtr);
         elemPtr = list->firstElement;
     }
