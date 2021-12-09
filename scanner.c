@@ -259,7 +259,7 @@ void number(Token *token, char c) {
                     EXPAND_STR;
                     state = S_EX_PLUS_MINUS;
                     break;
-                } else if ( c >= '0' && c <= '9') {printf("first:%d second:%f",token->attribs.integer, token->attribs.number);
+                } else if ( c >= '0' && c <= '9'){
                     EXPAND_STR;
                     state = S_NUMBER;
                     break;
@@ -509,7 +509,6 @@ void get_token(Token *token) {
                             return;
                         }
             default:
-                printf("sem se nemam co dostat jako\n");
                 return;
         }
     }

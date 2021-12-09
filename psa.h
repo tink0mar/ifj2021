@@ -131,13 +131,68 @@ PsaStackItem *psa_stack_top(PsaStack *stack);
  */
 PsaStackItem *psa_stack_top_terminal(PsaStack *stack);
 
+/**
+ * @brief Function that converts token to PsaStackItem
+ * @param token The given token
+ * @param parser_data ParserData for general info about parser
+ * @return PsaStackItem 
+ */
 PsaStackItem token_to_psa_stack_item(Token *token, ParserData *parser_data);
+
+/**
+ * @brief A part function for the shift process
+ * @param stack The stack
+ * @param entry_item The entry item
+ * @param entry_token The entry token
+ * @param parser_data General info about parser
+ * @return true Returns true on success
+ * @return false Returns false when the function fails 
+ */
 bool psa_push_and_load(PsaStack *stack, PsaStackItem *entry_item, Token *entry_token, ParserData *parser_data);
+
+/**
+ * @brief A part function for the shift process
+ * @param stack The stack
+ */
 void psa_modify_top_terminal(PsaStack *stack);
+
+/**
+ * @brief Auxiliary function of psa_reduce()
+ * @param stack 
+ * @param top_item_type 
+ */
 void psa_reduce_pop_and_update(PsaStack *stack, PsaItemType *top_item_type);
+
+/**
+ * @brief Reduce process of PSA
+ * @param stack The stack
+ * @param parser_data General info about parser
+ * @return true Returns true on success
+ * @return false Returns false on failure
+ */
 bool psa_reduce(PsaStack *stack, ParserData *parser_data);
+
+/**
+ * @brief Main PSA function
+ * @param parser_data General info about parser
+ * @return DataType Returns DataType of the final expression
+ */
 DataType psa(ParserData *parser_data);
+
+/**
+ * @brief Function is called to check 
+ * 
+ * @param parser_data General info about parser
+ * @param its_if Bool indicates whether its if or while statement
+ * @return true Returns true on success
+ * @return false Returns false on failure
+ */
 bool psa_condition(ParserData *parser_data, bool its_if);
+
+/**
+ * @brief Function deallocates the stack
+ * @param stack The stack to be deallocated
+ */
 void psa_stack_destroy(PsaStack *stack);
 
 #endif

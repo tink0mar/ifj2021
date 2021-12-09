@@ -71,12 +71,12 @@ typedef enum {
 
 typedef enum {
 
-    S_START,            //co toto to?
+    S_START,
     S_EOF,
     
     //operators
     S_PLUS,
-    S_MINUS_COMMENT, // moze z toho vzinknut --
+    S_MINUS_COMMENT,
     S_MUL,
     S_DIV,
     S_FLOOR_DIV,
@@ -136,7 +136,7 @@ typedef enum {
 
 typedef struct {
 
-    char *string; // TODO dynamicky string 
+    char *string;
     int integer;
     double number;
 
@@ -154,29 +154,79 @@ typedef struct {
 } Token;
 
 /**
- * @brief Get the token object
+ * @brief Load data from stdin, set token attributes/type if data is valid
  * 
- * @return TToken* 
+ * if data invalid, set error.c and return. Ignors whitespaces if it's irrelevant
+ * 
+ * @return void
  */
-
 void get_token(Token *token);
 
 /**
  * @brief Appends char to string
- * 
- * char *string = NULL;
- * expand_string(&string,'a');
- * 
+ *  
  * @param string string where the c will be apended
- * @param c char to be appended
- * @return void
+ * @param c - char to be appended
+ * 
+ * @return 0 - ok
+ * @return 99 - realloc failed
  */
 
 int expand_string(char **string, char c);
+
+/**
+ * @brief Init token to next use 
+ * @param token - token->attribs.string set NULL
+ *
+ * @return void
+ */
 void init_token(Token *token);
+
+/**
+ * @brief Read identifier, check if there is any keyword
+ * 
+ * check if identifier is valid
+ * 
+ * @param token - load identifier to token->attribs.string and set token->type
+ * @return void
+ */
 void alphabet(Token *token, char c);
+
+/**
+ * @brief Finds out whether it's a "-"sign or comment
+ * 
+ * if data invalid (eof inside multiple lines comment) set error.c and return
+ * 
+ * @param token - if its "-"sign, sets token->type to TT_MINUS
+ * 
+ * @return 1 - "-"sign
+ * @return 0 - comment, get_token continue 
+*/
 int dash_minus(Token *token);
+
+/**
+ * @brief Read number to token, check valid format of number
+ * 
+ * if number invalid, set error.c and return
+ * 
+ * @param token - set token->type and load to token->attribs number 
+ * @param c - first number loaded by get_token 
+ *
+ *  @return void
+*/
 void number(Token *token, char c);
+
+/**
+ * @brief Read string, if valid, set to token->attribs.string
+ * 
+ * if load "\", then expect number 1-255 or invalid 
+ * if string invalid, set error.c and return
+ * 
+ * @param token - set token->type and load to token->attribs number 
+ * @param c - first number loaded by get_token 
+ *
+ * @return void
+*/
 void string(Token *token);
 
 #endif 
