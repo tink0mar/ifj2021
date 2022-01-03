@@ -1,7 +1,7 @@
 /**
  * @file error.h
- * @brief definition of errors
- * @author 
+ * @brief Definition of errors
+ * @author Martin Kozák
  * 
  * Project: IFJ compiler
  * Date: 24.11.2021

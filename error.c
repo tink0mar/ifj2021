@@ -1,6 +1,6 @@
 /**
  * @file error.c
- * @brief 
+ * @brief Error module
  * @author Martin Kozák
  * 
  * Project: IFJ compiler

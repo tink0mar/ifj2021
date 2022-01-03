@@ -32,7 +32,6 @@ void start();
 void print_code();
 
 /**
-* @brief Generate datatype or frame
  *
  * @param token The token address
  * @param frame frame
@@ -218,6 +217,7 @@ bool gen_frame_global(bool global);
 */
 bool gen_move_ret_to_val(char *id, int topindex, int index);
 
+bool gen_move_val_to_ret(int index);
 
 /**
  * @brief Generate label for function
